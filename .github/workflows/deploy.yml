@@ -45,7 +45,7 @@ jobs:
             -i ~/.ssh/folio_deploy \
             -p "$SSH_PORT" \
             "$SSH_USER@$SSH_HOST" \
-            'wsl.exe -- bash -s' <<'REMOTE_SCRIPT'
+            'bash -s' <<'REMOTE_SCRIPT'
           set -euo pipefail
           cd ~/workspace/zotero-folio
           git fetch origin main
