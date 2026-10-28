@@ -3,6 +3,7 @@
 ## 진행 중
 
 ## 완료
+- [x] Node 버전 정렬 — 잠긴 의존성(Supabase ≥22, pdfjs-dist ≥22.13)에 맞춰 `engines`를 `>=22.13.0`, Docker 기반 이미지를 `node:22-alpine`으로 올림
 - [x] MIT 라이선스 추가 — 루트 `LICENSE` 파일 작성(저작권자 `jwhitekim`, 2026). 코드 변경 없는 문서 추가라 빌드 검증 대상 아님
 - [x] 필기(펜/형광펜/지우개) 도구 UI 숨김 — GoodNotes로 필기하고 완성된 PDF를 Zotero 첨부파일로 교체·동기화하는 방식으로 결정(직접 만든 필기 도구가 GoodNotes 필기감을 따라가기 어렵다는 판단). 관련 로직/서버 라우트는 그대로 두고, `PdfPane.svelte`의 새 상수 `SHOW_DRAWING_TOOLS = false`로 툴바 버튼만 숨김 — 나중에 다시 켤 수 있음. 빌드 통과. docs/overview/scope-discipline-notes.md에도 "신규 기능 개발 중단, 버그 수정 위주" 방침 함께 기록
 - [x] 모바일/태블릿 핀치 확대·축소 애니메이션 끊김 수정 — 핀치 미리보기 중(배율 확정 전)에도 하이라이트/필기 레이어가 매 프레임 재렌더되며 `getBoundingClientRect` 읽기 + DOM 쓰기를 반복, 이게 확대 미리보기용 `transform: scale`이 걸린 합성 레이어 전체를 매 프레임 리페인트시켜 버벅임 발생. 레이어가 캔버스와 같은 배율로 이미 함께 확대되므로 미리보기 중 재렌더가 애초에 불필요하다는 게 확인됨 — `zoom !== renderedZoom`(미리보기 중)이면 재렌더 건너뛰고, 배율 확정(`pagerendered`) 후에만 정확히 다시 그리도록 수정. 확대 중인 레이어에 `will-change: transform` 힌트 추가(HTML 스냅샷 뷰어도 동일 적용). `PdfViewer.svelte`, `HtmlViewer.svelte`. 빌드 통과. Supabase 인증정보 부재로 이 환경에서 실제 구동 검증은 못 함 — 태블릿에서 핀치 체감 확인 필요
