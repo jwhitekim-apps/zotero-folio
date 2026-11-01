@@ -1,7 +1,7 @@
 # Tasks
 
 capability별 구현 체크리스트. 세션 단위 작업 기록(무엇을 언제 왜
-고쳤는지)은 [TODO.md](../TODO.md)(todo-guard 운영)에 남는다 — 이 문서는
+고쳤는지)은 [TODO.md](../TODO.md)에 남는다 — 이 문서는
 그 결과가 "4개 capability를 빠짐없이 구현했는가"를 한눈에 보는 용도.
 
 ## papers — 논문 목록/제목 검색

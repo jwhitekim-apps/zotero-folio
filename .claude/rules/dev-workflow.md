@@ -1,9 +1,9 @@
 # 작업 디렉터리
 
 **셸 작업 디렉터리는 항상 프로젝트 루트(`zotero-folio/`)로 유지한다.**
-`.claude/hooks/*.sh`(Stop/SessionStart 훅)가 상대경로로 실행되기 때문에,
+`.claude/hooks/*.sh`(PostToolUse 훅)가 상대경로로 실행되기 때문에,
 `cd web && ...`처럼 작업 디렉터리를 바꾼 채로 두면 다음 훅 실행 시
-`.claude/hooks/check-todo.sh` 같은 경로를 `web/.claude/hooks/...`에서
+`.claude/hooks/deploy-status-hook.sh` 같은 경로를 `web/.claude/hooks/...`에서
 찾아 "No such file or directory"로 실패한다(실제로 겪은 사고).
 `web/` 안에서 명령이 필요하면 `cd web && <명령>` 대신 서브셸
 `(cd web && <명령>)`을 쓰거나, 명령 종료 후 바로 루트로 돌아온다.

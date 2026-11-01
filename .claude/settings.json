@@ -4,66 +4,13 @@
     "pr": ""
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/session-start.sh"
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "RULES_LENGTH_THRESHOLD=150 bash .claude/hooks/watch-rules.sh"
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Write|Edit|NotebookEdit|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/pre-tool.sh"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if [ ! -d app ]; then exit 0; fi; OUT=$( { pytest -q && mypy app/ && ruff check; } 2>&1 ); if [ $? -ne 0 ]; then echo \"$OUT\" >&2; exit 2; fi",
-            "timeout": 120,
-            "statusMessage": "완료 조건 검증 중 (pytest / mypy / ruff)..."
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/check-todo.sh"
-          },
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/doc-check.sh"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/deploy-status-guard-hook.sh"
+            "command": "bash .claude/hooks/deploy-status-hook.sh"
           }
         ]
       }
