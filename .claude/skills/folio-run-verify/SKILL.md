@@ -49,20 +49,33 @@ cat /tmp/folio-server.log     # 에러 없이 "Folio 서버 실행 중"이 찍�
 curl -s -o /dev/null -w "%{http_code}\n" http://localhost:3099/
 ```
 
-`.env`에 실제 `ZOTERO_API_KEY`/`ZOTERO_USER_ID`가 있으므로 사용자의 실제 Zotero 라이브러리 데이터가 뜬다 — 조회(GET)만 하고, 쓰기 동작(메모 저장, 웹페이지 추가)을 테스트할 땐 실제로 사용자 라이브러리에 기록이 남는다는 걸 인지한다.
+## 4-1. 로그인 (Zotero OAuth)
+
+`/api/*`는 로그인 세션이 있어야 응답한다. 로그인하지 않으면 `/api/papers`가 401이다. 로그인은 Zotero OAuth(`/oauth/login` → zotero.org 승인 → `/oauth/callback`)이고, 세션은 쿠키 `folio.sid`와 서버 메모리(express-session MemoryStore)에 있다. Zotero 토큰은 Supabase `folio_users`에 남는다.
+
+- **브라우저는 `agent-browser`의 고정 프로필로 연다.** zotero.org 로그인 쿠키가 이 프로필에 남아 있어야 재로그인을 에이전트가 할 수 있다.
+
+  ```bash
+  P="$HOME/.agent-browser/profiles/default"
+  agent-browser --profile "$P" open http://localhost:3099/
+  agent-browser --profile "$P" snapshot -i -c   # "Zotero로 계속하기" 클릭
+  ```
+
+- **서버를 재시작하면 Folio 세션은 사라진다(MemoryStore).** zotero.org에 이미 로그인된 프로필이면 "Zotero로 계속하기" → 승인 화면 클릭으로 다시 로그인된다. 이 클릭은 에이전트가 해도 된다.
+- **zotero.org 비밀번호 입력, Cloudflare 확인 화면이 나오면 멈추고 사람에게 넘긴다.** 비밀번호를 대신 입력하지 않는다. 서버에 화면이 없으면 `agent-browser dashboard start`(기본 포트 4848)로 대시보드를 띄우고, 사람이 포트 포워딩한 `http://localhost:4848`에서 직접 로그인하게 한다.
+- `.env`에 `SESSION_SECRET`이 비어 있으면 서버가 켤 때마다 임시 키를 만든다. 검증 전에 값이 있는지 확인한다.
+
+로그인하면 사용자의 실제 Zotero 라이브러리 데이터가 뜬다. 조회(GET)만 하고, 쓰기 동작(메모 저장, 웹페이지 추가)을 테스트할 땐 실제로 사용자 라이브러리에 기록이 남는다는 걸 인지한다.
 
 ## 5. 테스트할 논문 찾기
 
 이 앱은 URL 라우팅이 없다 (해시 라우팅도 아님 — `#/paper/KEY` 식으로 직접 이동 불가). 논문은 반드시 UI 안에서 검색으로 찾아야 한다:
 
+API는 세션 쿠키가 있어야 하므로 curl 대신 로그인된 브라우저 안에서 조회한다:
+
 ```bash
 # attachmentType이 'html'인 것과 'pdf'인 것을 각각 하나씩 찾아둔다
-curl -s "http://localhost:3099/api/papers" | python3 -c "
-import json,sys
-for p in json.load(sys.stdin):
-    if p.get('attachmentType') in ('html','pdf'):
-        print(p['attachmentType'], p['itemKey'], '-', p['title'])
-"
+agent-browser --profile "$P" eval "fetch('/api/papers').then(r=>r.json()).then(a=>a.filter(p=>['html','pdf'].includes(p.attachmentType)).slice(0,10).map(p=>p.attachmentType+' '+p.itemKey+' - '+p.title).join('\\n'))"
 ```
 
 브라우저에서: 상단 "검색" 아이콘 클릭 → 제목 일부 입력 → 검색 결과 클릭.
@@ -73,7 +86,7 @@ for p in json.load(sys.stdin):
 
 ## 7. 마우스 드래그가 필요한 UI(분할 패널 리사이즈 등)
 
-브라우저 자동화의 `left_click_drag`가 실제 `pointerdown`/`pointermove` 이벤트를 못 만들어내 무반응일 수 있다. 이럴 땐 `mcp__claude-in-chrome__javascript_tool`로 `PointerEvent`를 직접 dispatch해서 확인한다:
+`agent-browser drag`가 실제 `pointerdown`/`pointermove` 이벤트를 못 만들어내 무반응일 수 있다. 이럴 땐 `agent-browser eval`로 `PointerEvent`를 직접 dispatch해서 확인한다:
 
 ```js
 const el = document.querySelector('.split-resizer'); // 대상 셀렉터로 교체
@@ -88,7 +101,7 @@ fire(window, 'pointerup', rect.x - 300, rect.y + 200);
 
 ## 8. 스크린샷만 믿지 않는다
 
-CSS transition(패널 리사이즈, 접기/펼치기 등)이나 debounce된 재계산(폭 맞춤 배율 등)이 걸린 화면은, 스크린샷을 찍은 타이밍이 애니메이션/디바운스 도중이면 실제로는 고쳐졌는데도 안 고쳐진 것처럼 보인다. 레이아웃이 딱 맞아떨어져야 하는 버그(잘림, 오버플로우 등)는 스크린샷 전에 `javascript_tool`로 실제 DOM 수치를 찍어서 숫자로 확인한다:
+CSS transition(패널 리사이즈, 접기/펼치기 등)이나 debounce된 재계산(폭 맞춤 배율 등)이 걸린 화면은, 스크린샷을 찍은 타이밍이 애니메이션/디바운스 도중이면 실제로는 고쳐졌는데도 안 고쳐진 것처럼 보인다. 레이아웃이 딱 맞아떨어져야 하는 버그(잘림, 오버플로우 등)는 스크린샷 전에 `agent-browser eval`로 실제 DOM 수치를 찍어서 숫자로 확인한다:
 
 ```js
 const box = document.querySelector('.some-container').getBoundingClientRect();
