@@ -21,7 +21,7 @@ description: Folio(이 저장소) 기능 추가나 버그 수정을 folio-builde
 
 | 역할 | 에이전트 타입 | 담당 | 스킬 |
 |------|-------------|------|------|
-| builder | `folio-builder` (커스텀) | 요청 분석/계획/구현(server+web), 자체 빌드 확인 | `plan` |
+| builder | `folio-builder` (커스텀) | 요청 분석/계획/구현(server+web), 자체 빌드 확인 | — |
 | verifier | `folio-verifier` (커스텀) | 실제 로컬 구동 + 브라우저로 동작 검증 | `folio-run-verify` |
 
 두 `Agent` 호출 모두 `model: "opus"`를 명시한다.
