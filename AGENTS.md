@@ -1,20 +1,15 @@
-# 작업 관리 규칙 (todo-guard)
+# Folio 에이전트 지침
 
-## TODO.md 운영
+Zotero 라이브러리에 저장한 논문을 웹에서 읽고 메모를 남기는 개인용 도구다.
 
-- 사용자의 모든 지시는 즉시 TODO.md 「진행 중」에 `- [ ]` 로 등록한다. 등록 없이 착수 금지
-- 항목을 마치면 `- [x]` 로 바꾸고 「완료」로 옮긴다. 실제로 끝나지 않은 것을 완료 처리하지 않는다
-- 사용자 판단이 필요해 진행 불가한 항목만 `- [?] 항목명 (사유)` 로 둔다
+프로젝트 규칙은 `.claude/rules/`에 주제별로 나뉘어 있다. Claude Code는 이 디렉터리를 자동으로 읽는다. 다른 에이전트는 작업 전에 필요한 파일을 직접 읽는다.
 
-## 문서 규칙
-
-슬라이드·보고서(`.pptx` `.pdf` `.doc` `.txt` `.hwp` `.md`)를 만들 때는
-`~/.claude/skills/todo-guard/rules/doc-rules.md` 를 **쓰기 전에 읽고** 적용한다.
-
-턴을 끝낼 때 바뀐 줄을 자동 검사한다. 위반이 있으면 종료가 막힌다.
-
-| 사용자가 말하면 | 실행 |
-|---|---|
-| 전체 검수해줘 | `python ~/.claude/skills/todo-guard/scripts/doc-guard.py --all` |
-| 바뀐 것만 검수해줘 | `python ~/.claude/skills/todo-guard/scripts/doc-guard.py --changed` |
-| 문서 규칙 꺼줘 / 켜줘 | `bash ~/.claude/skills/todo-guard/scripts/doc-toggle.sh off｜on` |
+| 파일 | 내용 |
+| --- | --- |
+| `identity.md` | 프로젝트 정체성과 폐기한 방향 |
+| `constraints.md` | 하지 말아야 할 것 |
+| `architecture.md` | 구조와 데이터 흐름 |
+| `dev-workflow.md` | 작업 디렉터리, 빌드, 코딩 컨벤션 |
+| `docs.md` | 문서 배치 |
+| `harness.md` | 기능 개발 워크플로(builder → verifier) |
+| `commit-automation.md` | 커밋 자동화 |
