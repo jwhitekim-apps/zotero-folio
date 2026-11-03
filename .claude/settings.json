@@ -2,18 +2,5 @@
   "attribution": {
     "commit": "",
     "pr": ""
-  },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash .claude/hooks/deploy-status-hook.sh"
-          }
-        ]
-      }
-    ]
   }
 }

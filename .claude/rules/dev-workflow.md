@@ -1,10 +1,11 @@
 # 작업 디렉터리
 
 **셸 작업 디렉터리는 항상 프로젝트 루트(`zotero-folio/`)로 유지한다.**
-`.claude/hooks/*.sh`(PostToolUse 훅)가 상대경로로 실행되기 때문에,
-`cd web && ...`처럼 작업 디렉터리를 바꾼 채로 두면 다음 훅 실행 시
-`.claude/hooks/deploy-status-hook.sh` 같은 경로를 `web/.claude/hooks/...`에서
-찾아 "No such file or directory"로 실패한다(실제로 겪은 사고).
+프로젝트 훅을 `.claude/hooks/*.sh` 같은 상대경로로 등록하면,
+`cd web && ...`처럼 작업 디렉터리를 바꾼 채로 두었을 때 다음 훅 실행이
+`web/.claude/hooks/...`에서 파일을 찾아 "No such file or directory"로
+실패한다(예전 훅에서 실제로 겪은 사고). 지금은 프로젝트 훅이 없고 배포 확인은
+jw 플러그인 훅이 맡지만, 빌드·테스트 명령의 경로도 같은 이유로 어긋날 수 있다.
 `web/` 안에서 명령이 필요하면 `cd web && <명령>` 대신 서브셸
 `(cd web && <명령>)`을 쓰거나, 명령 종료 후 바로 루트로 돌아온다.
 PDF 뷰어 등을 빌드 확인할 때는 아래 "빌드"의 루트 스크립트를 쓴다.

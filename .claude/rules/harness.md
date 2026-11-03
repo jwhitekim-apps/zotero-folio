@@ -14,3 +14,4 @@
 | 2026-09-02 | folio-verifier 제거 | agents | 토큰 사용량이 커서 오케스트레이터가 간단히 직접 검증 |
 | 2026-11-01 | folio-verifier 복원, builder의 `plan` 스킬 의존 제거 | agents, skills | 스킬이 verifier를 계속 호출하는데 파일이 없어 워크플로가 끊김. `plan`은 9월에 삭제됨 |
 | 2026-11-01 | 폐기된 유저 단위 스킬(todo-guard, watch-rules) 훅 제거, deploy-status 훅 재설치, 동작하지 않던 pytest Stop 훅 삭제 | hooks, settings | 레포 단위와 유저 단위 경계 정리 |
+| 2026-11-03 | deploy-status 껍데기 훅 삭제, `.claude/deploy-status.enabled`로 전환 | hooks, settings | my-claude-skills가 jw 플러그인으로 바뀌어 껍데기 훅이 부르던 `~/.claude/skills/deploy-status` 경로가 사라짐 |
