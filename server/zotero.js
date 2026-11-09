@@ -398,7 +398,8 @@ export async function createWebpageItem({ url, title }) {
       itemType: 'webpage',
       title: title || url,
       url,
-      accessDate: new Date().toISOString(),
+      // Zotero는 밀리초가 붙은 ISO 형식(.410Z)을 거부하므로 초 단위까지만 보낸다
+      accessDate: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
     },
   ];
 
