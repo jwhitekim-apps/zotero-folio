@@ -3143,6 +3143,18 @@ a.reader-title svg {
   }
 }
 
+/* 다크 모드에서는 --accent-strong이 밝은 하늘색이라 사이드바의 흰 글자가 잘 안 보였다.
+   사이드바만 짙은 남색 계열로 고정해 라이트 모드와 같은 "어두운 바탕 + 밝은 글자" 대비를 유지한다. */
+@media (prefers-color-scheme: dark) and (min-width: 901px) {
+  .library-sidebar {
+    border-right-color: rgba(255, 255, 255, 0.06);
+    background:
+      radial-gradient(circle at 30% 0, color-mix(in srgb, var(--accent) 16%, transparent), transparent 18rem),
+      linear-gradient(165deg, #1d2c42, #172233 55%, #121a26);
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.35);
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .library-hero {
     border-color: var(--border);
