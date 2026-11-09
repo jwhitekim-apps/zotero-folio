@@ -3,7 +3,7 @@
   import LogoutButton from './LogoutButton.svelte';
   import { onMount } from 'svelte';
 
-  let { tab, username = '', onSelectTab, onSearch } = $props();
+  let { tab, username = '', guest = false, onSelectTab, onSearch, onLogin } = $props();
 
   const tabs = [
     { id: 'home', label: '홈', icon: 'home' },
@@ -49,6 +49,18 @@
   });
 </script>
 
+<style>
+  .sidebar-login-btn {
+    flex-shrink: 0;
+    padding: 0.38rem 0.7rem;
+    border-radius: 8px;
+    background: var(--accent-strong);
+    color: #fffdf7;
+    font-size: 0.68rem;
+    font-weight: 700;
+  }
+</style>
+
 <aside class="library-sidebar">
   <div class="sidebar-brand">
     <span class="sidebar-brand-mark"><Icon name="library" size={22} strokeWidth={1.65} /></span>
@@ -83,9 +95,15 @@
   </div>
 
   <div class="sidebar-account">
-    <span class="account-avatar">{(username || 'F').slice(0, 1).toUpperCase()}</span>
-    <span class="account-copy"><strong>{username || '내 서재'}</strong><small>Zotero 연결됨</small></span>
-    <LogoutButton compact />
+    {#if guest}
+      <span class="account-avatar">F</span>
+      <span class="account-copy"><strong>둘러보는 중</strong><small>로그인이 필요해요</small></span>
+      <button class="sidebar-login-btn" onclick={onLogin}>로그인</button>
+    {:else}
+      <span class="account-avatar">{(username || 'F').slice(0, 1).toUpperCase()}</span>
+      <span class="account-copy"><strong>{username || '내 서재'}</strong><small>Zotero 연결됨</small></span>
+      <LogoutButton compact />
+    {/if}
   </div>
 </aside>
 

@@ -24,6 +24,9 @@
   let currentPath = $state(window.location.pathname);
   let showLoginRoute = $derived(currentPath === '/login');
   let showGuideRoute = $derived(currentPath === '/guide');
+  // 비로그인 사용자가 `/`로 들어오면 로그인 화면 대신 홈을 "둘러보기"로 보여준다.
+  let guestHome = $derived(authChecked && !authConnected && currentPath === '/');
+  let showLibrary = $derived((authConnected || guestHome) && !showLoginRoute && !showGuideRoute);
 
   async function checkAuth() {
     authChecked = false;
@@ -32,7 +35,7 @@
       const status = await api.authStatus();
       authConnected = status.connected;
       authUsername = status.username || '';
-      if (!status.connected && currentPath !== '/login' && currentPath !== '/guide') {
+      if (!status.connected && currentPath !== '/login' && currentPath !== '/guide' && currentPath !== '/') {
         history.replaceState({}, '', '/login');
         currentPath = '/login';
       }
@@ -51,7 +54,8 @@
     const onKeyDown = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        if (authConnected && !detailKey && !showLoginRoute) openSearch();
+        if (guestHome) goLogin();
+        else if (authConnected && !detailKey && !showLoginRoute) openSearch();
       }
     };
     window.addEventListener('popstate', onPopState);
@@ -62,17 +66,29 @@
     };
   });
 
+  // 비로그인 둘러보기에서 로그인이 필요한 동작을 누르면 /login으로 보낸다.
+  function goLogin() {
+    history.pushState({}, '', '/login');
+    currentPath = '/login';
+  }
+
   function selectTab(t) {
+    if (guestHome) {
+      if (t !== 'home') goLogin();
+      return;
+    }
     tab = t;
     detailKey = null;
   }
 
   function openSearch() {
+    if (guestHome) return goLogin();
     tab = 'search';
     detailKey = null;
   }
 
   function openPaper(key) {
+    if (guestHome) return goLogin();
     detailKey = key;
   }
 
@@ -83,17 +99,24 @@
 
 <div
   class="app-frame"
-  class:library-frame={authConnected && !detailKey && !showLoginRoute && !showGuideRoute}
+  class:library-frame={showLibrary && !detailKey}
   class:reader-frame={Boolean(detailKey) && !showLoginRoute && !showGuideRoute}
-  class:login-frame={showGuideRoute || !authConnected || showLoginRoute}
+  class:login-frame={showGuideRoute || (!authConnected && !guestHome) || showLoginRoute}
 >
-  {#if authConnected && !detailKey && !showLoginRoute && !showGuideRoute}
-    <TabBar {tab} username={authUsername} onSelectTab={selectTab} onSearch={openSearch} />
+  {#if showLibrary && !detailKey}
+    <TabBar
+      {tab}
+      username={authUsername}
+      guest={guestHome}
+      onSelectTab={selectTab}
+      onSearch={openSearch}
+      onLogin={goLogin}
+    />
   {/if}
 
   <main
     class:reading-mode={Boolean(detailKey) && !showLoginRoute && !showGuideRoute}
-    class:login-mode={!showGuideRoute && (!authConnected || showLoginRoute)}
+    class:login-mode={!showGuideRoute && ((!authConnected && !guestHome) || showLoginRoute)}
     class:guide-mode={showGuideRoute}
   >
     {#if showGuideRoute}
@@ -104,6 +127,8 @@
         <strong>Folio</strong>
         <i></i>
       </div>
+    {:else if guestHome}
+      <HomeDashboard guest onLogin={goLogin} onOpenPaper={openPaper} onOpenLibrary={goLogin} onOpenCollections={goLogin} />
     {:else if showLoginRoute || !authConnected}
       <LoginPage error={authError} onRetry={checkAuth} connected={authConnected} username={authUsername} />
     {:else if detailKey}

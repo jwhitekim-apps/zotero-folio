@@ -3,7 +3,7 @@
   import Icon from '../components/Icon.svelte';
   import PaperCard from '../components/PaperCard.svelte';
 
-  let { onOpenPaper, onOpenLibrary, onOpenCollections, username = '' } = $props();
+  let { onOpenPaper, onOpenLibrary, onOpenCollections, username = '', guest = false, onLogin } = $props();
 
   let papers = $state([]);
   let collections = $state([]);
@@ -25,6 +25,8 @@
   }
 
   async function runSync() {
+    // 비로그인 둘러보기에서는 동기화 대신 로그인으로 보낸다.
+    if (guest) return onLogin?.();
     syncing = true;
     syncStatus = '';
     try {
@@ -43,7 +45,8 @@
     papers = papers.filter((p) => p.itemKey !== itemKey);
   }
 
-  load();
+  // 비로그인일 때는 데이터를 불러오지 않는다(API가 401을 낸다).
+  if (!guest) load();
 </script>
 
 <header class="library-hero">
@@ -68,7 +71,16 @@
 
 {#if syncStatus}<p class="notice"><Icon name="check" size={15} /> {syncStatus}</p>{/if}
 
-{#if loading}
+{#if guest}
+  <div class="state-card guest-card">
+    <span class="state-icon"><Icon name="library" size={27} /></span>
+    <strong>로그인하고 내 서재를 열어 보세요</strong>
+    <p>Zotero 계정으로 로그인하면 내 논문과 컬렉션, 메모가 여기에 표시됩니다.</p>
+    <div class="hero-actions guest-actions">
+      <button class="hero-primary" onclick={onLogin}><Icon name="library" size={17} /> Zotero로 로그인</button>
+    </div>
+  </div>
+{:else if loading}
   <div class="skeleton-list" aria-label="홈을 불러오는 중">
     {#each Array(3) as _}<div class="skeleton-card"><i></i><span></span><span></span></div>{/each}
   </div>
@@ -112,3 +124,10 @@
     </div>
   {/if}
 {/if}
+
+<style>
+  .guest-actions {
+    margin-top: 1rem;
+    justify-content: center;
+  }
+</style>
