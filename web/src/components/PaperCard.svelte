@@ -125,6 +125,9 @@
     box-shadow: -4px 6px 0 rgba(67, 43, 28, 0.12), 0 14px 30px rgba(57, 37, 25, 0.16);
     color: #fffaf2;
     flex-direction: column;
+    /* 표지 안 글자는 화면 폭(vw)이 아니라 표지 자신의 폭(cqi)에 맞춰 줄인다.
+       같은 화면에서도 칸 수에 따라 표지 폭이 달라져 제목이 저자 줄을 덮던 문제를 막는다. */
+    container-type: inline-size;
     transition: transform 200ms ease, box-shadow 200ms ease;
   }
 
@@ -168,9 +171,12 @@
     padding-bottom: 0.65rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.28);
     font-family: ui-monospace, monospace;
-    font-size: 0.55rem;
+    overflow: hidden;
+    font-size: clamp(0.5rem, 5.2cqi, 0.72rem);
     font-weight: 700;
     letter-spacing: 0.11em;
+    text-overflow: clip;
+    white-space: nowrap;
   }
 
   .generated-cover > strong {
@@ -178,9 +184,9 @@
     z-index: 1;
     display: -webkit-box;
     overflow: hidden;
-    margin-top: 1rem;
+    margin-top: clamp(0.6rem, 7cqi, 1.1rem);
     font-family: var(--font-serif);
-    font-size: clamp(0.78rem, 1.3vw, 1.02rem);
+    font-size: clamp(0.74rem, 8.4cqi, 1.3rem);
     font-weight: 500;
     line-height: 1.34;
     letter-spacing: -0.025em;
@@ -193,8 +199,9 @@
     z-index: 1;
     overflow: hidden;
     margin-top: auto;
+    padding-top: 0.4rem;
     padding-right: 1.5rem;
-    font-size: 0.6rem;
+    font-size: clamp(0.56rem, 5.4cqi, 0.78rem);
     opacity: 0.72;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -206,6 +213,15 @@
     right: 0.75rem;
     bottom: 0.72rem;
     opacity: 0.65;
+  }
+
+  /* 좁은 표지(모바일 3열, 태블릿 5열)는 제목을 3~4줄에서 자른다. 표지 아래에 전체 제목이 다시 나온다. */
+  @container (max-width: 150px) {
+    .generated-cover > strong { -webkit-line-clamp: 3; }
+  }
+
+  @container (min-width: 151px) and (max-width: 190px) {
+    .generated-cover > strong { -webkit-line-clamp: 4; }
   }
 
   .cover-card-copy {
@@ -234,6 +250,12 @@
     font-size: 0.66rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  /* 울트라와이드(app.css의 1800px 단계)에서 표지 아래 제목/저자도 한 단계 키운다. */
+  @media (min-width: 1800px) {
+    .cover-card-copy strong { font-size: 0.95rem; }
+    .cover-card-copy small { font-size: 0.76rem; }
   }
 
   .paper-card-open {

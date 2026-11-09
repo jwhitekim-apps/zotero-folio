@@ -111,21 +111,11 @@ main.reading-mode {
 
 main.login-mode {
   width: 100vw;
-  height: 100dvh;
-  overflow: hidden;
+  /* 고정 높이 대신 최소 높이만 둔다. 짧은 뷰포트에서 로그인 콘텐츠가 잘리거나
+     겹치지 않도록 내용만큼 늘어나고, 페이지 스크롤로 넘긴다. */
+  min-height: 100dvh;
   margin-left: calc(50% - 50vw);
   padding: 0;
-}
-
-@media (max-width: 680px) {
-  /* 좁은 화면에서는 LoginPage.svelte의 .folio-cover가 세로로 쌓이며
-     100dvh를 넘길 수 있어(overflow: visible) 이 래퍼도 함께 스크롤을 허용
-     해야 내용이 잘리지 않는다. */
-  main.login-mode {
-    height: auto;
-    min-height: 100dvh;
-    overflow: visible;
-  }
 }
 
 main.guide-mode {
@@ -3002,7 +2992,7 @@ a.reader-title svg {
   }
 }
 
-@media (max-width: 1100px) and (min-width: 901px) {
+@media (max-width: 1180px) and (min-width: 901px) {
   .library-frame {
     grid-template-columns: 220px minmax(0, 1fr);
   }
@@ -3022,6 +3012,23 @@ a.reader-title svg {
 
   .book-shelf > :nth-child(5) {
     display: none;
+  }
+}
+
+/* 사이드바가 처음 나타나는 901~1040px은 본문이 가장 좁다. 책 장식을 줄여 제목 줄 폭을 확보한다. */
+@media (max-width: 1040px) and (min-width: 901px) {
+  .library-hero {
+    grid-template-columns: minmax(0, 1fr) 180px;
+  }
+
+  .hero-book {
+    width: 100px;
+    height: 150px;
+    padding: 0.8rem;
+  }
+
+  .hero-book b {
+    font-size: 0.85rem;
   }
 }
 
@@ -3059,7 +3066,7 @@ a.reader-title svg {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 680px) {
   .library-hero {
     min-height: 0;
     padding: 2rem 1.5rem;
@@ -3093,7 +3100,7 @@ a.reader-title svg {
   }
 
   .stat-card > span {
-    font-size: 0.6rem;
+    font-size: 0.68rem;
   }
 
   .stat-card > span .ui-icon {
@@ -3122,6 +3129,17 @@ a.reader-title svg {
 
   .collection-card .collection-number {
     display: none;
+  }
+}
+
+/* 481~680px(큰 폰 가로, 작은 태블릿)에서는 3열 표지가 너무 커지므로 4열로 둔다. */
+@media (min-width: 481px) and (max-width: 680px) {
+  .book-shelf {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .book-shelf > :nth-child(4) {
+    display: block;
   }
 }
 
@@ -3180,7 +3198,9 @@ a.reader-title svg {
   }
 
   .library-hero h1 {
-    font-size: clamp(3rem, 3.3vw, 4.8rem);
+    /* 기본 max-width(620px)가 큰 글자에서 "서재"를 둘째 줄로 밀어내므로 푼다. */
+    max-width: none;
+    font-size: clamp(3rem, 3.3vw, 4.4rem);
   }
 
   .hero-book-stack {
@@ -3213,18 +3233,117 @@ a.reader-title svg {
   }
 }
 
-@media (min-width: 2100px) {
+/* Ultrawide (1800px 이상): 본문 폭은 1640px에서 멈추고 남는 폭은 양쪽 여백으로
+   돌린다. 그 대신 글자와 상자를 한 단계 키워 먼 거리에서도 읽히게 한다. */
+@media (min-width: 1800px) {
   .library-frame > main:not(.reading-mode):not(.login-mode):not(.guide-mode) {
-    padding-inline: clamp(5rem, 5vw, 8rem);
+    padding-inline: clamp(4rem, 4vw, 7rem);
+  }
+
+  .library-frame > main > :is(header, div, p):not(.library-hero),
+  .library-frame > main > .library-hero,
+  .library-frame > main > .book-shelf,
+  .library-frame > main > .home-collection-grid,
+  .library-frame > main > .collection-grid,
+  .library-frame > main > .paper-list,
+  .library-frame > main > form {
+    max-width: 1640px;
+    margin-right: auto;
+    margin-left: auto;
   }
 
   .library-hero {
-    grid-template-columns: minmax(0, 1.45fr) minmax(500px, .55fr);
+    min-height: clamp(360px, 34vh, 440px);
+    grid-template-columns: minmax(0, 1.4fr) minmax(460px, .6fr);
+  }
+
+  .library-hero-copy > p:last-of-type {
+    font-size: 1.05rem;
+  }
+
+  .hero-actions button {
+    min-height: 50px;
+    padding: 0 1.35rem;
+    font-size: 0.9rem;
+  }
+
+  .eyebrow {
+    font-size: 0.78rem;
+  }
+
+  .section-heading h2 {
+    font-size: 2.3rem;
+  }
+
+  .section-heading button {
+    font-size: 0.86rem;
+  }
+
+  .stat-card {
+    min-height: 112px;
+    padding: 1.35rem 1.6rem;
+  }
+
+  .stat-card > span {
+    font-size: 0.82rem;
+  }
+
+  .stat-card strong {
+    font-size: 2.25rem;
+  }
+
+  .stat-card small {
+    font-size: 0.8rem;
   }
 
   .home-collection-card {
-    min-height: 92px;
+    min-height: 96px;
     padding: 1rem 1.2rem;
+  }
+
+  .home-collection-card strong {
+    font-size: 0.95rem;
+  }
+
+  .home-collection-card small {
+    font-size: 0.74rem;
+  }
+
+  .sidebar-brand strong {
+    font-size: 1.4rem;
+  }
+
+  .sidebar-brand small {
+    font-size: 0.6rem;
+  }
+
+  .sidebar-search {
+    min-height: 48px;
+  }
+
+  .sidebar-search span {
+    font-size: 0.8rem;
+  }
+
+  .tabbar-desktop > p {
+    font-size: 0.64rem;
+  }
+
+  .tab-btn-desktop {
+    min-height: 48px;
+    font-size: 0.86rem;
+  }
+
+  .sidebar-quote p {
+    font-size: 0.84rem;
+  }
+
+  .account-copy strong {
+    font-size: 0.8rem;
+  }
+
+  .account-copy small {
+    font-size: 0.64rem;
   }
 }
 
