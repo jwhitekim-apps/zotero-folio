@@ -36,6 +36,7 @@ import {
   findUserById,
 } from './db.js';
 import { runWithUser, currentUser } from './context.js';
+import { SupabaseSessionStore } from './sessionStore.js';
 import {
   fetchChangedTopItems,
   fetchChangedAttachmentParentKeys,
@@ -77,9 +78,8 @@ const CONSUMER_SECRET = process.env.ZOTERO_CLIENT_SECRET;
 // 세션에는 folio_users.id만 담고, Zotero 토큰 같은 실제 값은 매 요청 Supabase에서
 // 읽는다 (로그아웃/토큰 갱신이 즉시 반영되도록).
 //
-// 저장소는 express-session 기본 MemoryStore를 쓴다 — 별도 세션 스토어 의존성을
-// 더하지 않기 위한 선택이다. 대신 서버를 재시작하면 세션이 사라져 다시
-// 로그인해야 한다 (Zotero 토큰은 Supabase에 남아 있으므로 재로그인은 클릭 두 번).
+// 저장소는 Supabase folio_sessions 테이블(SupabaseSessionStore)을 쓴다 —
+// 서버를 재시작하거나 재배포해도 로그인이 유지되도록.
 const IS_HTTPS = APP_BASE_URL.startsWith('https://');
 const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 if (!process.env.SESSION_SECRET) {
@@ -92,9 +92,11 @@ if (IS_HTTPS) app.set('trust proxy', 1);
 app.use(
   session({
     name: 'folio.sid',
+    store: new SupabaseSessionStore(), // 서버 재시작 후에도 로그인 유지
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    rolling: true, // 접속할 때마다 30일 만료를 다시 연장
     cookie: {
       httpOnly: true,
       sameSite: 'lax', // OAuth 콜백이 외부(zotero.org)에서 돌아오므로 strict는 못 쓴다

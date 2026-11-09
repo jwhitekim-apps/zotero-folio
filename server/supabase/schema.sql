@@ -108,3 +108,12 @@ create trigger folio_users_touch_updated_at
 alter table public.folio_users      enable row level security;
 alter table public.folio_papers     enable row level security;
 alter table public.folio_sync_state enable row level security;
+
+-- ---------------------------------------------------------------------------
+-- folio_sessions: express-session 저장소 (server/sessionStore.js)
+-- 서버 재시작/재배포 후에도 로그인 세션을 유지하기 위해 Supabase에 보관한다.
+-- expires_at 인덱스는 만료 세션 정리용. RLS는 켜두고 서버(service_role)만 접근.
+-- ---------------------------------------------------------------------------
+create table if not exists public.folio_sessions (sid text primary key, sess jsonb not null, expires_at timestamptz not null);
+create index if not exists folio_sessions_expires_at_idx on public.folio_sessions (expires_at);
+alter table public.folio_sessions enable row level security;
