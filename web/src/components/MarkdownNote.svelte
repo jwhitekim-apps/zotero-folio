@@ -65,7 +65,20 @@
   // 내용이 잠깐이라도 사라지지 않도록 sessionStorage에 초안을 같이 넣어둔다.
   // Zotero에는 아래 자동 저장 로직이 반영하고, 이 초안은 그 사이의 로컬
   // 임시 보관일 뿐이다(저장 성공 시 지움).
-  let { initialMarkdown = '', onSave, draftKey, paperTitle = '' } = $props();
+  // initialMemo: 부모가 가진 메모 {noteKey, version, markdown} (없으면 null).
+  // onSave(markdown, base)는 저장 결과 {noteKey, version}을 돌려주고, 충돌이면
+  // status 409와 body.current(서버의 현재 메모)를 가진 에러를 던진다.
+  let { initialMemo = null, onSave, draftKey, paperTitle = '' } = $props();
+
+  // svelte-ignore state_referenced_locally -- 마운트 시점의 메모를 편집 기준으로 한 번만 읽는다.
+  const initialMarkdown = initialMemo?.markdown ?? '';
+
+  // 마지막으로 읽었거나 저장 성공으로 받은 Zotero 메모 버전. 저장 요청에 실어
+  // 보내서, 다른 기기가 그 사이에 고쳤으면 서버가 덮어쓰지 않고 충돌로 돌려주게 한다.
+  // svelte-ignore state_referenced_locally -- 마운트 시점 버전을 기준으로 시작한다.
+  let base = { noteKey: initialMemo?.noteKey ?? null, version: initialMemo?.version ?? null };
+  // 충돌 시 서버의 현재 메모를 담아 두고, 사용자가 고르기 전까지 초안은 그대로 둔다.
+  let conflict = $state(null); // null | { current }
 
   function draftStorageKey() {
     return draftKey ? `zotero-insight:memo-draft:${draftKey}` : null;
@@ -98,7 +111,7 @@
   // svelte-ignore state_referenced_locally -- 최초 로드 때 기존 노트가 있었는지만 기억한다.
   let hasPersisted = $state(initialMarkdown.trim() !== '');
 
-  let saveState = $state('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+  let saveState = $state('idle'); // 'idle' | 'saving' | 'saved' | 'error' | 'conflict'
   let saveError = $state('');
   let savedAt = $state(null);
   let saveInFlight = false;
@@ -131,7 +144,10 @@
     // 아니기 때문. 최신 기준으로 clearDraft()하면 아직 저장 안 된 초안이 사라진다.
     const snapshot = markdown;
     try {
-      await onSave(snapshot);
+      // 저장 성공 응답의 버전이 다음 저장의 기준이 된다 (이 쓰기가 만든 버전).
+      const saved = await onSave(snapshot, base);
+      base = { noteKey: saved?.noteKey ?? null, version: saved?.version ?? null };
+      conflict = null;
       hasPersisted = snapshot.trim() !== '';
       saveState = 'saved';
       savedAt = new Date();
@@ -141,8 +157,15 @@
         clearDraft();
       }
     } catch (err) {
-      saveState = 'error';
-      saveError = err.message;
+      if (err.status === 409) {
+        // 다른 기기에서 먼저 바뀜. 초안(markdown, sessionStorage)은 건드리지 않고
+        // 사용자가 덮어쓸지 서버 내용을 불러올지 고르게 한다.
+        conflict = { current: err.body?.current ?? null };
+        saveState = 'conflict';
+      } else {
+        saveState = 'error';
+        saveError = err.message;
+      }
     } finally {
       saveInFlight = false;
       if (saveQueued) {
@@ -191,6 +214,24 @@
     e.target.value = '';
   }
 
+  // 충돌 해결 1: 내 초안을 서버 현재 버전 위에 덮어쓴다 (사용자가 명시적으로 고른 경우만).
+  function overwriteWithMine() {
+    const current = conflict?.current ?? null;
+    base = { noteKey: current?.noteKey ?? null, version: current?.version ?? null };
+    conflict = null;
+    saveState = 'idle';
+    doSave();
+  }
+
+  // 충돌 해결 2: 서버의 현재 메모로 편집 내용을 바꾼다 (내 초안은 버려진다).
+  function loadServerVersion() {
+    const current = conflict?.current ?? null;
+    base = { noteKey: current?.noteKey ?? null, version: current?.version ?? null };
+    conflict = null;
+    saveState = 'idle';
+    markdown = current?.markdown ?? '';
+  }
+
   // 파일명으로 안전하지 않은 문자를 걸러 논문 제목 기반 .md 파일명을 만든다.
   function downloadFilename() {
     const base = (paperTitle || '메모').trim().replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80);
@@ -224,6 +265,8 @@
         <span class="note-strip-status error"
           >저장 실패 · {saveError} · <button onclick={doSave}>다시 시도</button></span
         >
+      {:else if saveState === 'conflict'}
+        <span class="note-strip-status error">다른 기기와 충돌 · 아래에서 선택</span>
       {:else if saveState === 'saved'}
         <span class="note-strip-status"
           >모두 저장됨 · {savedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span
@@ -263,6 +306,18 @@
         onchange={onFilePick}
       />
     </div>
+
+    {#if conflict}
+      <!-- 다른 기기에서 먼저 고쳐진 경우. 작성 중인 내용은 그대로 두고, 덮어쓸지
+           서버 내용을 불러올지 사용자가 고르게 한다(자동으로 어느 쪽도 하지 않음). -->
+      <div class="note-conflict" role="alert">
+        <p>다른 기기에서 먼저 이 메모를 고쳤어요. 지금 작성 중인 내용은 그대로 남아 있어요.</p>
+        <div class="note-conflict-actions">
+          <button class="md-tool-btn" onclick={overwriteWithMine}>내 내용으로 덮어쓰기</button>
+          <button class="md-tool-btn" onclick={loadServerVersion}>다른 기기 내용 불러오기</button>
+        </div>
+      </div>
+    {/if}
   </div>
 
   <!-- 본문만 세로로 스크롤한다 — 헤더는 위 note-head가 고정으로 붙잡는다. -->
@@ -331,6 +386,26 @@
 
   .note-strip-status.error {
     color: var(--danger);
+  }
+
+  /* 충돌 안내 박스. 헤더 안에 붙어 있어 스크롤해도 선택 버튼이 항상 보인다. */
+  .note-conflict {
+    margin-top: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--danger);
+    border-radius: 8px;
+    color: var(--danger);
+    font-size: 0.78rem;
+  }
+
+  .note-conflict p {
+    margin: 0 0 0.55rem;
+  }
+
+  .note-conflict-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
   }
 
   .note-strip-status.error button {

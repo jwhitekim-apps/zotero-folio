@@ -37,6 +37,30 @@ function userPrefix() {
   return `${BASE_URL}/users/${requireUser().zoteroUserId}`;
 }
 
+// Zotero 응답 헤더 Link의 rel="next"를 읽어 다음 페이지 URL을 돌려준다.
+// 다음 페이지가 없으면 null. 목록 조회는 모두 이 규칙으로 페이지를 넘긴다
+// (Zotero 기본 limit은 25, 최대 100이라 한 페이지만 읽으면 나머지가 빠진다).
+function nextPageUrl(res) {
+  const link = res.headers.get('Link');
+  const nextMatch = link && link.match(/<([^>]+)>;\s*rel="next"/);
+  return nextMatch ? nextMatch[1] : null;
+}
+
+// 여러 페이지짜리 JSON 배열 목록을 전부 이어 붙여 돌려준다.
+async function fetchAllPages(firstUrl, errorLabel) {
+  const all = [];
+  let url = firstUrl;
+  while (url) {
+    const res = await fetch(url, { headers: headers() });
+    if (!res.ok) {
+      throw new Error(`${errorLabel}: ${res.status} ${res.statusText}`);
+    }
+    all.push(...(await res.json()));
+    url = nextPageUrl(res);
+  }
+  return all;
+}
+
 // 마지막 동기화 버전 이후 바뀐 최상위 아이템을 전부 가져온다 (페이지네이션 처리).
 // 반환값: { items, newVersion }
 export async function fetchChangedTopItems(sinceVersion) {
@@ -56,9 +80,7 @@ export async function fetchChangedTopItems(sinceVersion) {
     const page = await res.json();
     items.push(...page);
 
-    const link = res.headers.get('Link');
-    const nextMatch = link && link.match(/<([^>]+)>;\s*rel="next"/);
-    url = nextMatch ? nextMatch[1] : null;
+    url = nextPageUrl(res);
   }
 
   return { items, newVersion };
@@ -82,9 +104,7 @@ export async function fetchChangedAttachmentParentKeys(sinceVersion) {
       if (item.data.parentItem) parentKeys.add(item.data.parentItem);
     }
 
-    const link = res.headers.get('Link');
-    const nextMatch = link && link.match(/<([^>]+)>;\s*rel="next"/);
-    url = nextMatch ? nextMatch[1] : null;
+    url = nextPageUrl(res);
   }
 
   return [...parentKeys];
@@ -114,13 +134,10 @@ export async function fetchItem(itemKey) {
 }
 
 // 아이템의 자식(첨부파일, note)을 전부 가져온다.
+// Zotero 기본 limit(25)에 걸리지 않도록 limit=100으로 요청하고 끝까지 넘긴다.
 export async function fetchChildren(itemKey) {
-  const url = `${userPrefix()}/items/${itemKey}/children?format=json`;
-  const res = await fetch(url, { headers: headers() });
-  if (!res.ok) {
-    throw new Error(`Zotero children 조회 실패: ${res.status} ${res.statusText}`);
-  }
-  return res.json();
+  const url = `${userPrefix()}/items/${itemKey}/children?format=json&limit=100`;
+  return fetchAllPages(url, 'Zotero children 조회 실패');
 }
 
 // 자식 첨부파일 중 원문 패널이 보여줄 수 있는 걸 찾는다 — PDF를 우선하고,
@@ -246,23 +263,8 @@ export async function replaceAttachmentFile(attachmentKey, fileBuffer) {
 // 로컬 DB에 캐시하지 않고 열 때마다 여기서 라이브로 읽는다 — 메모 note와 같은
 // 원칙이라 Zotero 데스크톱/모바일에서 칠한 것도 그대로 같이 보인다.
 export async function fetchAttachmentAnnotations(attachmentKey) {
-  const annotations = [];
-  let url = `${userPrefix()}/items/${attachmentKey}/children?format=json&itemType=annotation&limit=100`;
-
-  while (url) {
-    const res = await fetch(url, { headers: headers() });
-    if (!res.ok) {
-      throw new Error(`Zotero annotation 조회 실패: ${res.status} ${res.statusText}`);
-    }
-
-    annotations.push(...(await res.json()));
-
-    const link = res.headers.get('Link');
-    const nextMatch = link && link.match(/<([^>]+)>;\s*rel="next"/);
-    url = nextMatch ? nextMatch[1] : null;
-  }
-
-  return annotations;
+  const url = `${userPrefix()}/items/${attachmentKey}/children?format=json&itemType=annotation&limit=100`;
+  return fetchAllPages(url, 'Zotero annotation 조회 실패');
 }
 
 // 하이라이트 annotation 아이템을 새로 만든다 (parentItem은 PDF attachment).
@@ -426,7 +428,10 @@ export async function createWebpageItem({ url, title }) {
 }
 
 // 이 도구가 만든 note를 수정한다 (부분 업데이트). 낙관적 잠금을 위해
-// version이 반드시 필요하다.
+// version(편집을 시작할 때 읽었던 버전)이 반드시 필요하다 — Zotero 쪽 버전이
+// 그 사이에 바뀌었으면 412가 오고, 이때 err.zoteroStatus = 412로 표시해 호출부가
+// 충돌로 처리하게 한다.
+// 반환값은 이 쓰기가 만든 새 버전({key, version}) — PATCH 응답 헤더로 받는다.
 export async function updateNote(noteKey, version, noteHtml) {
   const url = `${userPrefix()}/items/${noteKey}`;
   const res = await fetch(url, {
@@ -439,12 +444,20 @@ export async function updateNote(noteKey, version, noteHtml) {
   });
 
   if (!res.ok) {
-    throw new Error(`Zotero note 수정 실패: ${res.status} ${res.statusText}`);
+    const err = new Error(`Zotero note 수정 실패: ${res.status} ${res.statusText}`);
+    err.zoteroStatus = res.status;
+    throw err;
   }
-  return fetchItem(noteKey);
+
+  // PATCH 성공 응답(204)에는 본문이 없고 Last-Modified-Version 헤더로 새 버전을 준다.
+  const modified = res.headers.get('Last-Modified-Version');
+  if (modified) return { key: noteKey, version: Number(modified) };
+  const item = await fetchItem(noteKey);
+  return { key: item.key, version: item.version };
 }
 
 // note를 삭제한다 (아이템 자체는 Zotero 휴지통으로 이동, 원한다면 거기서 복구 가능).
+// version이 어긋나면 412 — err.zoteroStatus로 구분한다 (updateNote와 같은 규칙).
 export async function deleteItem(itemKey, version) {
   const url = `${userPrefix()}/items/${itemKey}`;
   const res = await fetch(url, {
@@ -452,16 +465,14 @@ export async function deleteItem(itemKey, version) {
     headers: headers({ 'If-Unmodified-Since-Version': String(version) }),
   });
   if (!res.ok && res.status !== 204) {
-    throw new Error(`Zotero 아이템 삭제 실패: ${res.status} ${res.statusText}`);
+    const err = new Error(`Zotero 아이템 삭제 실패: ${res.status} ${res.statusText}`);
+    err.zoteroStatus = res.status;
+    throw err;
   }
 }
 
-// 라이브러리 컬렉션 목록.
+// 라이브러리 컬렉션 목록 (전부 — 여러 페이지면 끝까지 읽는다).
 export async function listCollections() {
   const url = `${userPrefix()}/collections?format=json&limit=100`;
-  const res = await fetch(url, { headers: headers() });
-  if (!res.ok) {
-    throw new Error(`Zotero 컬렉션 조회 실패: ${res.status} ${res.statusText}`);
-  }
-  return res.json();
+  return fetchAllPages(url, 'Zotero 컬렉션 조회 실패');
 }

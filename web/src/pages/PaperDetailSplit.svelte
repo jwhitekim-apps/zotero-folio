@@ -75,8 +75,17 @@
     }
   }
 
-  function saveMemo(markdown) {
-    return api.saveMemo(itemKey, markdown);
+  // 메모 저장. 모바일/데스크톱 분기가 바뀌면 MarkdownNote가 다시 만들어지는데,
+  // 그때 쓰는 기준값이 paper.memo다. 그래서 저장에 성공하면 여기도 같이 갱신해
+  // 오래된 최초 GET 내용으로 되돌아가지 않게 한다.
+  async function saveMemo(markdown, base) {
+    const saved = await api.saveMemo(itemKey, markdown, base);
+    if (paper) {
+      paper.memo = saved.noteKey
+        ? { noteKey: saved.noteKey, version: saved.version, markdown }
+        : null;
+    }
+    return saved;
   }
 
   load();
@@ -124,7 +133,7 @@
         <aside class="split-note-pane" aria-label="이 논문의 노트">
           {#key itemKey}
             <MarkdownNote
-              initialMarkdown={paper.memo?.markdown ?? ''}
+              initialMemo={paper.memo}
               onSave={saveMemo}
               draftKey={itemKey}
               paperTitle={paper.title}
@@ -138,7 +147,7 @@
       <NoteBottomSheet>
         {#key itemKey}
           <MarkdownNote
-            initialMarkdown={paper.memo?.markdown ?? ''}
+            initialMemo={paper.memo}
             onSave={saveMemo}
             draftKey={itemKey}
             paperTitle={paper.title}

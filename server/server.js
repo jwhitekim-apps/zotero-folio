@@ -302,6 +302,69 @@ function noteHtmlToMarkdown(html) {
   return turndown.turndown(html).trim();
 }
 
+// 키 단위 직렬화(단일 프로세스 안에서만 유효). 같은 논문의 메모 저장 요청이
+// 겹치면 "조회 → 생성" 사이에 다른 요청이 끼어들어 note가 두 개 생기므로, 같은
+// 키의 작업은 앞선 것이 끝난 뒤에 실행한다. 다른 키끼리는 서로 기다리지 않는다.
+const keyLocks = new Map();
+function withKeyLock(key, fn) {
+  const prev = keyLocks.get(key) ?? Promise.resolve();
+  const run = prev.then(() => fn());
+  // 실패한 작업이 뒤따르는 작업을 막지 않도록 꼬리(tail)는 항상 성공 상태로 둔다.
+  const tail = run.catch(() => {});
+  keyLocks.set(key, tail);
+  tail.then(() => {
+    if (keyLocks.get(key) === tail) keyLocks.delete(key);
+  });
+  return run;
+}
+
+// Zotero에 지금 있는 메모 note를 {noteKey, version, markdown}으로 읽는다. 없으면 null.
+async function readCurrentMemo(paperKey) {
+  const note = await findChildNoteByTag(paperKey, MEMO_TAG);
+  if (!note) return null;
+  return { noteKey: note.key, version: note.version, markdown: noteHtmlToMarkdown(note.data.note) };
+}
+
+// 메모 저장 본체. base는 클라이언트가 편집을 시작할 때 가진 버전
+// ({noteKey, version}, 메모가 없었다면 null). 서버의 현재 상태가 base와 다르면
+// (다른 기기가 먼저 고쳤거나 지웠거나 새로 만든 경우) 덮어쓰지 않고 충돌로 돌려준다.
+// 반환: { conflict: true, current } 또는 { conflict: false, saved: {noteKey, version} }
+async function saveMemoLocked(paperKey, markdown, base) {
+  const existing = await findChildNoteByTag(paperKey, MEMO_TAG);
+  const current = existing
+    ? { noteKey: existing.key, version: existing.version, markdown: noteHtmlToMarkdown(existing.data.note) }
+    : null;
+
+  const isStale = base
+    ? !existing || existing.key !== base.noteKey || existing.version !== base.version
+    : existing !== null; // 클라이언트는 메모가 없다고 봤는데 Zotero에는 있다 → 중복 생성 방지
+  if (isStale) return { conflict: true, current };
+
+  if (markdown.trim() === '') {
+    // 내용을 전부 지우고 저장하면 빈 note를 남기지 않고 아예 삭제한다.
+    if (existing) {
+      try {
+        await deleteItem(existing.key, existing.version);
+      } catch (err) {
+        if (err.zoteroStatus === 412) return { conflict: true, current: await readCurrentMemo(paperKey) };
+        throw err;
+      }
+    }
+    return { conflict: false, saved: { noteKey: null, version: null } };
+  }
+
+  const html = markdownToNoteHtml(markdown);
+  try {
+    const saved = existing
+      ? await updateNote(existing.key, existing.version, html)
+      : await createChildNote(paperKey, html, [MEMO_TAG]);
+    return { conflict: false, saved: { noteKey: saved.key, version: saved.version } };
+  } catch (err) {
+    if (err.zoteroStatus === 412) return { conflict: true, current: await readCurrentMemo(paperKey) };
+    throw err;
+  }
+}
+
 // --- sync ------------------------------------------------------------------
 // papers 캐시만 갱신한다 (AI 처리 없음). 실패한 아이템은 로그만 남기고
 // 계속 진행 — 전체 sync가 하나의 실패로 중단되면 안 된다.
@@ -318,6 +381,10 @@ async function doSync() {
   // 이번에도 재조회해서 다시 시도한다. 이 재시도 결과에 따라 실패 목록을
   // 갱신하므로, 시작 집합은 이전 실패 목록으로 잡는다.
   const failedKeys = new Set(await getFailedItemKeys());
+  // 이번 동기화에서 빠뜨린 변경이 남았는지. 남았으면 전역 커서(lastVersion)를
+  // 전진시키지 않는다 — 다음 동기화가 같은 since 구간을 다시 조회해 메운다.
+  // (실패 키를 failedKeys에 남기는 것만으로는 "변경목록 자체를 못 읽은" 경우를 못 메운다.)
+  let incomplete = false;
   for (const key of failedKeys) {
     if (topKeys.has(key)) continue;
     try {
@@ -338,11 +405,15 @@ async function doSync() {
         items.push(parent);
         topKeys.add(key);
       } catch (err) {
+        // 알려진 실패 키로 남겨 다음 동기화에서 재시도하고, 커서도 전진시키지 않는다.
         console.error(`[sync] 첨부 변경 부모 조회 실패: ${key} - ${err.message}`);
+        failedKeys.add(key);
+        incomplete = true;
       }
     }
   } catch (err) {
     console.error(`[sync] 첨부 변경 목록 조회 실패: ${err.message}`);
+    incomplete = true;
   }
 
   let cached = 0;
@@ -377,19 +448,30 @@ async function doSync() {
   try {
     const deletedKeys = await fetchDeletedItemKeys(lastVersion);
     for (const key of deletedKeys) {
-      await deletePaper(key);
-      removed++;
-      // Zotero에서 지워진 아이템은 더 이상 재시도 대상이 아니므로 큐에서도 뺀다
-      // (없으면 무시) — 사라진 키를 매번 404로 재조회하지 않도록.
-      failedKeys.delete(key);
+      try {
+        await deletePaper(key);
+        removed++;
+        // Zotero에서 지워진 아이템은 더 이상 재시도 대상이 아니므로 큐에서도 뺀다
+        // (없으면 무시) — 사라진 키를 매번 404로 재조회하지 않도록.
+        failedKeys.delete(key);
+      } catch (err) {
+        // 이 삭제를 못 지웠는데 커서가 넘어가면 다시는 안 지워지므로 커서를 멈춘다.
+        console.error(`[sync] 삭제 반영 실패: ${key} - ${err.message}`);
+        incomplete = true;
+      }
     }
   } catch (err) {
     console.error(`[sync] 삭제 항목 조회 실패: ${err.message}`);
+    incomplete = true;
   }
 
   await setFailedItemKeys([...failedKeys]);
-  await setLastVersion(newVersion);
-  return { checked: items.length, cached, removed };
+  if (incomplete) {
+    console.warn('[sync] 일부 단계가 실패해 동기화 기준 버전을 올리지 않았습니다 — 다음 동기화에서 다시 시도합니다');
+  } else {
+    await setLastVersion(newVersion);
+  }
+  return { checked: items.length, cached, removed, cursorAdvanced: !incomplete };
 }
 
 // --- Zotero OAuth 로그인 --------------------------------------------------
@@ -584,26 +666,33 @@ app.delete('/api/papers/:key', async (req, res) => {
   }
 });
 
+// 본문: { markdown, baseNoteKey, baseVersion }. baseNoteKey/baseVersion은 클라이언트가
+// 마지막으로 읽었거나 저장 성공으로 받은 메모 버전이다(메모가 없었으면 둘 다 null).
+// 서버는 그 버전을 기준으로만 쓰고, 어긋나면 409(충돌)로 현재 메모를 돌려준다.
 app.put('/api/papers/:key/memo', async (req, res) => {
-  const { markdown } = req.body;
+  const { markdown, baseNoteKey = null, baseVersion = null } = req.body;
   if (typeof markdown !== 'string') {
     return res.status(400).json({ error: 'markdown(문자열)이 필요합니다' });
   }
+  const hasBase = typeof baseNoteKey === 'string' && baseNoteKey !== '';
+  if (hasBase && !Number.isInteger(baseVersion)) {
+    return res.status(400).json({ error: 'baseVersion(정수)이 필요합니다' });
+  }
+  const base = hasBase ? { noteKey: baseNoteKey, version: baseVersion } : null;
 
   try {
-    const existing = await findChildNoteByTag(req.params.key, MEMO_TAG);
+    // 같은 논문의 메모 저장은 한 번에 하나만 — 첫 메모를 두 요청이 동시에 만들지 않도록.
+    const lockKey = `${currentUser().id}:${req.params.key}:${MEMO_TAG}`;
+    const result = await withKeyLock(lockKey, () => saveMemoLocked(req.params.key, markdown, base));
 
-    if (markdown.trim() === '') {
-      // 내용을 전부 지우고 저장하면 빈 note를 남기지 않고 아예 삭제한다.
-      if (existing) await deleteItem(existing.key, existing.version);
-      return res.json({ noteKey: null });
+    if (result.conflict) {
+      return res.status(409).json({
+        error: '다른 기기에서 먼저 수정되었어요. 작성 중인 내용은 그대로 남아 있어요.',
+        code: 'conflict',
+        current: result.current,
+      });
     }
-
-    const html = markdownToNoteHtml(markdown);
-    const saved = existing
-      ? await updateNote(existing.key, existing.version, html)
-      : await createChildNote(req.params.key, html, [MEMO_TAG]);
-    res.json({ noteKey: saved.key, version: saved.version });
+    res.json(result.saved);
   } catch (err) {
     console.error('[papers memo] 저장 실패:', err.message);
     res.status(500).json({ error: err.message });

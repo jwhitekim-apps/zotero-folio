@@ -12,6 +12,7 @@
   let selected = $state(null); // { key, name }
   let papers = $state([]);
   let papersLoading = $state(false);
+  let papersError = $state('');
   let requestId = 0;
 
   async function load() {
@@ -26,18 +27,31 @@
     }
   }
 
+  // 컬렉션을 고를 때마다 이전 목록은 비우고 새로 읽는다. 결과/오류/로딩 표시는
+  // 모두 "가장 최근 요청"일 때만 반영한다 — 빠르게 A→B를 누르면 늦게 온 A 응답이
+  // B 화면을 덮어쓰거나, A의 실패 메시지가 B 화면에 뜨는 걸 막는다.
   async function selectCollection(c) {
     const currentRequest = ++requestId;
     selected = c;
+    papers = [];
+    papersError = '';
     papersLoading = true;
     try {
       const result = await api.listCollectionPapers(c.key);
-      // 응답이 왔을 때 여전히 가장 최근에 선택한 컬렉션에 대한 것일 때만 반영한다
-      // — 빠르게 A→B를 연달아 누르면 늦게 온 A 응답이 B를 덮어쓰는 걸 막는다.
       if (currentRequest === requestId) papers = result;
+    } catch (err) {
+      if (currentRequest === requestId) papersError = err.message;
     } finally {
       if (currentRequest === requestId) papersLoading = false;
     }
+  }
+
+  function backToCollections() {
+    // 진행 중인 요청이 뒤늦게 돌아와도 화면을 건드리지 못하도록 세대를 올린다.
+    requestId++;
+    selected = null;
+    papersLoading = false;
+    papersError = '';
   }
 
   async function deletePaper(itemKey) {
@@ -49,13 +63,15 @@
 </script>
 
 {#if selected}
-  <button class="back-btn" onclick={() => (selected = null)}><Icon name="arrow-left" size={18} /> 컬렉션 목록</button>
+  <button class="back-btn" onclick={backToCollections}><Icon name="arrow-left" size={18} /> 컬렉션 목록</button>
   <header class="detail-heading collection-heading collection-detail-hero">
     <span class="collection-hero-icon"><Icon name="folder" size={28} /></span>
     <div><p class="eyebrow">COLLECTION</p><h1>{selected.name}</h1></div>
   </header>
   {#if papersLoading}
     <div class="skeleton-list"><div class="skeleton-card"><i></i><span></span><span></span></div></div>
+  {:else if papersError}
+    <div class="state-card error-state"><Icon name="alert" size={25} /><strong>논문 목록을 불러오지 못했어요</strong><p>{papersError}</p><button class="back-btn" onclick={() => selectCollection(selected)}>다시 시도</button></div>
   {:else if papers.length === 0}
     <div class="state-card"><span class="state-icon"><Icon name="library" size={27} /></span><strong>빈 컬렉션이에요</strong><p>이 컬렉션에는 아직 논문이 없습니다.</p></div>
   {:else}
