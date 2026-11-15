@@ -51,9 +51,9 @@
 
 <header class="library-hero">
   <div class="library-hero-copy">
-    <p class="eyebrow">PRIVATE RESEARCH LIBRARY</p>
-    <h1>{username ? `${username}님의 서재` : '나의 서재'}</h1>
-    <p>읽어야 할 자료와 기록한 생각이 한곳에 머무는<br class="desktop-break" /> 조용한 연구 공간입니다.</p>
+    <p class="eyebrow">{username ? `${username} · PRIVATE LIBRARY` : 'PRIVATE LIBRARY'}</p>
+    <h1>나의 서재</h1>
+    <p>읽을 문서와 남긴 메모가 한곳에 모이는<br class="desktop-break" /> 조용한 서재입니다.</p>
     <div class="hero-actions">
       <button class="hero-primary" onclick={onOpenLibrary}><Icon name="library" size={17} /> 라이브러리 둘러보기</button>
       <button class="hero-secondary" onclick={runSync} disabled={syncing}>

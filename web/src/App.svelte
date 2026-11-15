@@ -28,6 +28,53 @@
   let guestHome = $derived(authChecked && !authConnected && currentPath === '/');
   let showLibrary = $derived((authConnected || guestHome) && !showLoginRoute && !showGuideRoute);
 
+  // Zotero 로그인 팝업 상태. 팝업이 열려 있는 동안만 닫힘을 감시한다.
+  let loginPopup = null;
+  let loginPopupTimer = null;
+
+  // 로그인 버튼 클릭 시 팝업을 연다. 열었으면 true(호출부가 기본 이동을 막는다),
+  // 차단되었거나 열 수 없으면 false — 그러면 링크의 기본 동작(전체 페이지 이동)이 그대로 진행된다.
+  function startZoteroLogin() {
+    let popup = null;
+    try {
+      // 사용자 클릭 핸들러 안에서 동기적으로 열어야 팝업 차단을 피할 수 있다.
+      popup = window.open('about:blank', 'folio-zotero-login', 'width=520,height=720');
+      if (!popup) return false;
+      popup.location.href = '/oauth/login?popup=1';
+    } catch {
+      try { popup?.close(); } catch { /* 닫기 실패는 무시 */ }
+      return false;
+    }
+    loginPopup = popup;
+    clearInterval(loginPopupTimer);
+    loginPopupTimer = setInterval(() => {
+      if (loginPopup?.closed) finishZoteroLogin();
+    }, 800);
+    return true;
+  }
+
+  // 팝업이 끝났거나(메시지 수신) 닫혔을 때 — 새로고침 없이 로그인 상태를 다시 확인한다.
+  async function finishZoteroLogin() {
+    clearInterval(loginPopupTimer);
+    loginPopupTimer = null;
+    loginPopup = null;
+    try {
+      const status = await api.authStatus();
+      authConnected = status.connected;
+      authUsername = status.username || '';
+      authError = '';
+      if (status.connected) {
+        // 로그인 화면에 머물지 않고 홈으로 옮긴다(히스토리는 교체해 뒤로가기 루프를 막는다).
+        history.replaceState({}, '', '/');
+        currentPath = '/';
+        tab = 'home';
+        detailKey = null;
+      }
+    } catch (err) {
+      authError = err.message;
+    }
+  }
+
   async function checkAuth() {
     authChecked = false;
     authError = '';
@@ -51,6 +98,12 @@
 
   onMount(() => {
     const onPopState = () => (currentPath = window.location.pathname);
+    // 팝업 콜백 페이지가 보내는 메시지. 같은 origin에서 온 것만 받는다.
+    const onMessage = (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'folio:zotero-login') return;
+      finishZoteroLogin();
+    };
     const onKeyDown = (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
@@ -60,9 +113,12 @@
     };
     window.addEventListener('popstate', onPopState);
     window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('message', onMessage);
     return () => {
       window.removeEventListener('popstate', onPopState);
       window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('message', onMessage);
+      clearInterval(loginPopupTimer);
     };
   });
 
@@ -130,7 +186,7 @@
     {:else if guestHome}
       <HomeDashboard guest onLogin={goLogin} onOpenPaper={openPaper} onOpenLibrary={goLogin} onOpenCollections={goLogin} />
     {:else if showLoginRoute || !authConnected}
-      <LoginPage error={authError} onRetry={checkAuth} connected={authConnected} username={authUsername} />
+      <LoginPage error={authError} onRetry={checkAuth} connected={authConnected} username={authUsername} onStartLogin={startZoteroLogin} />
     {:else if detailKey}
       <PaperDetailSplit
         itemKey={detailKey}

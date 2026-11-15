@@ -478,6 +478,44 @@ async function doSync() {
 // request token과 secret은 /oauth/login → /oauth/callback 사이에서만 잠깐
 // 필요하다. 멀티유저이므로 모듈 전역이 아니라 요청자의 세션에 담는다 — 전역에
 // 두면 두 사람이 동시에 로그인할 때 서로의 request token을 덮어쓴다.
+//
+// ?popup=1로 들어오면 팝업 창에서 진행 중인 로그인이다. 콜백이 끝나면 리다이렉트
+// 대신 opener(원래 Folio 화면)에 postMessage로 알리고 팝업을 닫는다. 팝업 여부는
+// 세션(pendingOAuth.popup)에 담아 콜백까지 가져간다 — URL에 실어 보내면 조작될 수 있다.
+// 팝업 승인 화면도 Zotero 도메인에서 열리므로 우리 도메인에 승인 화면을 넣지 않는다.
+
+// 콜백이 팝업에서 끝났을 때 돌려주는 페이지. opener가 살아 있으면 같은 origin으로
+// 알리고 닫고, 없으면(차단·opener 유실) 전체 페이지 방식처럼 Folio 홈으로 보낸다.
+function popupDonePage() {
+  return `<!doctype html>
+<html lang="ko">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Folio · Zotero 연결</title></head>
+<body style="font-family:sans-serif;padding:24px;line-height:1.6">
+<p id="msg">Zotero 연결을 마무리하고 있어요…</p>
+<script>
+(function () {
+  var notified = false;
+  try {
+    var opener = window.opener;
+    if (opener && !opener.closed) {
+      // 대상 origin을 우리 origin으로 고정해서 다른 사이트로는 메시지가 나가지 않게 한다.
+      opener.postMessage({ type: 'folio:zotero-login', status: 'ok' }, window.location.origin);
+      notified = true;
+    }
+  } catch (e) {
+    notified = false;
+  }
+  if (notified) {
+    document.getElementById('msg').textContent = '연결이 끝났어요. 이 창은 닫혀요.';
+    window.close();
+  } else {
+    window.location.replace('/');
+  }
+})();
+</script>
+</body>
+</html>`;
+}
 
 app.get('/oauth/login', async (req, res) => {
   try {
@@ -486,7 +524,7 @@ app.get('/oauth/login', async (req, res) => {
       consumerSecret: CONSUMER_SECRET,
       callbackUrl: `${APP_BASE_URL}/oauth/callback`,
     });
-    req.session.pendingOAuth = { token: oauthToken, secret: oauthTokenSecret };
+    req.session.pendingOAuth = { token: oauthToken, secret: oauthTokenSecret, popup: req.query.popup === '1' };
     res.redirect(buildAuthorizeUrl({ oauthToken, appName: 'Folio' }));
   } catch (err) {
     console.error('[oauth] request token 실패:', err.message);
@@ -500,6 +538,8 @@ app.get('/oauth/callback', async (req, res) => {
   if (!pending || pending.token !== oauthToken) {
     return res.status(400).send('OAuth 세션이 만료되었습니다. 다시 시도해주세요.');
   }
+  // regenerate 전에 읽어 둬야 한다 — 세션이 새로 만들어지면 pendingOAuth가 사라진다.
+  const fromPopup = pending.popup === true;
   try {
     const result = await getAccessToken({
       consumerKey: CONSUMER_KEY,
@@ -524,7 +564,13 @@ app.get('/oauth/callback', async (req, res) => {
         return res.status(500).send('로그인 세션 생성 실패: ' + err.message);
       }
       req.session.userId = user.id;
-      req.session.save(() => res.redirect('/'));
+      req.session.save(() => {
+        if (fromPopup) {
+          res.set('Cache-Control', 'no-store');
+          return res.type('html').send(popupDonePage());
+        }
+        res.redirect('/');
+      });
     });
   } catch (err) {
     console.error('[oauth] access token 교환 실패:', err.message);

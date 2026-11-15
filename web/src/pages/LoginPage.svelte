@@ -1,6 +1,11 @@
 <script>
   import Icon from '../components/Icon.svelte';
-  let { error = '', onRetry, connected = false, username = '' } = $props();
+  let { error = '', onRetry, connected = false, username = '', onStartLogin = null } = $props();
+
+  // 팝업을 열었으면 기본 이동을 막고, 못 열었으면(차단) href의 전체 페이지 이동을 그대로 둔다.
+  function startLogin(event) {
+    if (onStartLogin?.()) event.preventDefault();
+  }
 </script>
 
 <div class="folio-cover">
@@ -15,7 +20,7 @@
       <div class="cover-copy">
         <p class="issue">YOUR RESEARCH, YOUR WORDS</p>
         <h1>읽은 것을<br />내 생각으로<br />남기세요.</h1>
-        <p class="dek">논문 원문과 나만의 노트를 한 흐름으로 연결하는 개인 연구 공간.</p>
+        <p class="dek">PDF 원문과 나만의 메모를 한 흐름으로 잇는 개인 서재.</p>
       </div>
 
       <figure class="research-figure">
@@ -33,9 +38,9 @@
       {:else if connected}
         <div class="entry-status"><Icon name="check" size={17} /><span><b>Zotero 연결 완료</b>{username || '내 계정'}</span></div>
         <a class="entry-button" href="/"><Icon name="library" size={18} /> 내 라이브러리로 이동 <Icon name="chevron" size={18} /></a>
-        <a class="entry-sub" href="/oauth/login">다른 Zotero 계정으로 연결</a>
+        <a class="entry-sub" href="/oauth/login" onclick={startLogin}>다른 Zotero 계정으로 연결</a>
       {:else}
-        <a class="entry-button" href="/oauth/login"><b class="z-mark">Z</b> Zotero로 계속하기 <Icon name="chevron" size={18} /></a>
+        <a class="entry-button" href="/oauth/login" onclick={startLogin}><b class="z-mark">Z</b> Zotero로 계속하기 <Icon name="chevron" size={18} /></a>
       {/if}
       <div class="trust"><Icon name="shield" size={15} /><span><b>OAuth로 안전하게 연결합니다.</b> Folio는 Zotero 비밀번호를 저장하거나 확인하지 않습니다.</span></div>
     </div>
