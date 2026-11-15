@@ -45,3 +45,7 @@ capability별 구현 체크리스트이자 유일한 할 일 목록. 새 작업�
 - [x] 홈 인사 "OOO님의 서재"에서 아이디 글씨 강조 줄이기 (근거: Understated Home Greeting)
 - [x] 두 번째 탭 이름 "논문" → "라이브러리" (근거: Consistent Library Naming)
 - [x] 첫 방문 사용자가 사용 가이드를 쉽게 찾도록 진입점 배치 — 로그인 버튼 아래 안내 상자 + 비로그인 홈 버튼 (근거: Discoverable Usage Guide)
+- [x] 로컬 검증용 관리자 로그인(`/dev/login`) — `.env` 토큰 + localhost 직접 요청만 허용 (근거: Local Verification Login)
+- [x] 버튼·카드·홈 책 표지 호버 효과 통일 (근거: Consistent Hover Feedback)
+- [x] 홈·라이브러리·컬렉션·검색 화면 등장 순서 애니메이션 (근거: Staggered Entrance Motion)
+- [ ] 홈 첫 화면 개선안 — Recent(recent.design) 등 레퍼런스를 참고해 글자 배치·대비 중심으로 (근거: Distinctive Home Hero)
