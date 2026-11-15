@@ -1,6 +1,6 @@
 # Folio
 
-Zotero에 저장한 논문을 웹에서 읽으며 메모를 남기는 개인용 도구입니다. 원문과 메모를 나란히 띄우고, 메모는 Zotero에 논문별 하위 메모(child note)로 저장됩니다.
+Zotero에 저장한 논문과 PDF 문서를 웹에서 읽으며 메모를 남기는 개인용 도구입니다. 원문과 메모를 나란히 띄우고, 메모는 Zotero에 문서별 하위 메모(child note)로 저장됩니다.
 
 ![왼쪽에 웹페이지 원문, 오른쪽에 마크다운 메모 에디터를 배치한 Folio 읽기 화면](web/public/images/zotero-setup/8.png)
 
@@ -14,7 +14,7 @@ Zotero 계정과 Zotero 웹 라이브러리에 동기화된 자료가 필요합�
 
 ## 개발 방식
 
-Folio는 Claude Code와 직접 만든 스킬 모음 [jwhitekim/my-claude-skills](https://github.com/jwhitekim/my-claude-skills)(`jw` 플러그인)로 개발했습니다. 기능마다 구현 → 실제 화면 검증 → 커밋 순서를 하네스로 강제합니다.
+Folio는 Claude Code와 직접 만든 스킬 모음 [jwhitekim/my-claude-skills](https://github.com/jwhitekim/my-claude-skills)(`jw` 플러그인)로 개발했습니다. 기능마다 문서 정리 → 구현 → 실제 화면 검증 → 커밋 순서를 하네스(작업 순서를 자동으로 지키게 하는 훅·규칙)로 강제합니다.
 
 | 단계 | 사용한 도구 |
 | --- | --- |
