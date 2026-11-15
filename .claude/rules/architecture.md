@@ -23,7 +23,7 @@
                     세션) + web/dist 정적 서빙
       ▲
       │ fetch('/api/...')
-[web/] — Svelte + Vite (탭: Papers / 나만의 메모 / 컬렉션 + 검색 아이콘)
+[web/] — Svelte + Vite (탭: 홈 / 라이브러리 / 컬렉션 + 검색 아이콘)
   빌드 결과(web/dist)를 server.js가 그대로 정적 서빙 — 서버 하나로 통합
 ```
 

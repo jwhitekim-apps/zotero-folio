@@ -50,3 +50,8 @@ capability별 구현 체크리스트이자 유일한 할 일 목록. 새 작업�
 - [x] 홈·라이브러리·컬렉션·검색 화면 등장 순서 애니메이션 (근거: Staggered Entrance Motion)
 - [x] 로그아웃 후 30일 안에는 Zotero 인증 없이 재로그인(서명된 기억하기 쿠키) (근거: Remembered Login After Logout)
 - [x] 홈 첫 화면 개선 — 잡지 표지형 머리글(날짜·자료 수), 굵은 윗줄, 큰 제목 (근거: Distinctive Home Hero)
+- [x] 라이브러리·컬렉션 머리글과 목록을 홈과 같은 잡지형으로 — 굵은 윗줄, 제목 마침표, 번호 붙은 목차형 목록 (근거: Consistent Editorial Page Style)
+- [x] 남은 화면 전체에 잡지형 규칙 적용 — `docs/design.md` "화면 디자인 언어"의 화면별 적용 표에서 "예정"인 항목 (근거: Consistent Editorial Page Style)
+- [x] 로그인 화면·사이드바·홈 책 표지에 남은 'Research' 표현을 문서 중심으로 교체 (근거: Document-Centered Copy)
+- [x] 로그인 화면에 잡지형 공통 규칙 맞춤 — 굵은 윗줄, 제목·로그인 칸 제목 끝 강조색 마침표 (근거: Consistent Editorial Page Style)
+- [x] 기능 배포 전에 이미 로그인해 있던 사용자도 기억하기 쿠키를 받도록, 로그인 상태 확인 때 쿠키가 없으면 발급 (근거: Remembered Login After Logout)

@@ -18,9 +18,9 @@ Folio는 Claude Code와 직접 만든 스킬 모음 [jwhitekim/my-claude-skills]
 
 | 단계 | 사용한 도구 |
 | --- | --- |
-| 요구사항 정리 | `jw:spec-docs`로 [기능별 요구사항](docs/specs/)과 [작업 목록](docs/tasks.md) 작성 |
+| 요구사항 정리 | 코드를 고치기 전에 `jw:spec-docs`로 [기능별 요구사항](docs/specs/)과 [작업 목록](docs/tasks.md) 작성. 코드만 바뀌고 문서가 그대로면 Stop 훅이 종료를 막음([규칙](.claude/rules/docs-first.md)) |
 | 구현과 검증 분리 | 구현 에이전트 [folio-builder](.claude/agents/folio-builder.md)와 검증 에이전트 [folio-verifier](.claude/agents/folio-verifier.md)를 [folio-feature-team](.claude/skills/folio-feature-team/) 스킬이 조율 |
-| 실제 화면 확인 | 작업이 끝나면 [Stop 훅](.claude/hooks/docker-up.sh)이 Docker로 다시 띄우고, `jw:agent-browser`로 브라우저 검증을 마칠 때까지 종료를 막음 |
+| 실제 화면 확인 | 작업이 끝나면 [Stop 훅](.claude/hooks/docker-up.sh)이 Docker로 다시 띄우고, `jw:agent-browser`로 브라우저 검증을 마칠 때까지 종료를 막음. 로그인 후 화면은 로컬 전용 관리자 로그인(`/dev/login`, `.env` 토큰)으로 확인 |
 | 교차 검토 | `jw:codex`로 Codex에게 코드·문서 검토 요청 |
 | 커밋과 배포 | `jw:commit-and-push`로 커밋, `jw:deploy-status`로 GitHub Actions 배포 결과 확인 |
 
