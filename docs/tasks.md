@@ -39,7 +39,9 @@ capability별 구현 체크리스트이자 유일한 할 일 목록. 새 작업�
 
 ## entry — 로그인 화면과 홈
 
-- [ ] Zotero 로그인을 Folio 도메인 안에서 처리하는 방법 검토 — 지금은 Zotero 페이지로 이동. 팝업 방식 등 가능 여부부터 조사 (근거: Login Without Leaving Folio Domain)
-- [ ] 로그인 화면 문구 "논문 원문과 나만의 노트를 한 흐름으로 연결하는 개인 연구 공간." 수정 — 연구보다 PDF 문서 중심으로 (근거: Document-Centered Copy)
-- [ ] 홈 안내 문구 "읽어야 할 자료와 기록한 생각이 한곳에 머무는 조용한 연구 공간입니다." 에서 '연구' 표현 수정 (근거: Document-Centered Copy)
-- [ ] 홈 인사 "OOO님의 서재"에서 아이디 글씨 강조 줄이기 (근거: Understated Home Greeting)
+- [x] Zotero 로그인을 Folio 도메인 안에서 처리하는 방법 검토 — 지금은 Zotero 페이지로 이동. 팝업 방식 등 가능 여부부터 조사 (근거: Login Without Leaving Folio Domain)
+- [x] 로그인 화면 문구 "논문 원문과 나만의 노트를 한 흐름으로 연결하는 개인 연구 공간." 수정 — 연구보다 PDF 문서 중심으로 (근거: Document-Centered Copy)
+- [x] 홈 안내 문구 "읽어야 할 자료와 기록한 생각이 한곳에 머무는 조용한 연구 공간입니다." 에서 '연구' 표현 수정 (근거: Document-Centered Copy)
+- [x] 홈 인사 "OOO님의 서재"에서 아이디 글씨 강조 줄이기 (근거: Understated Home Greeting)
+- [x] 두 번째 탭 이름 "논문" → "라이브러리" (근거: Consistent Library Naming)
+- [ ] 첫 방문 사용자가 사용 가이드를 쉽게 찾도록 진입점 배치 — 레퍼런스 조사 후 결정 (근거: Discoverable Usage Guide)
