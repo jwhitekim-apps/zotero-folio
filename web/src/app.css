@@ -2396,7 +2396,8 @@ a.reader-title svg {
   gap: 0.65rem;
 }
 
-.hero-actions button {
+.hero-actions button,
+.hero-actions a {
   display: inline-flex;
   min-height: 42px;
   padding: 0 1rem;
@@ -3273,7 +3274,8 @@ a.reader-title svg {
     font-size: 1.05rem;
   }
 
-  .hero-actions button {
+  .hero-actions button,
+  .hero-actions a {
     min-height: 50px;
     padding: 0 1.35rem;
     font-size: 0.9rem;
