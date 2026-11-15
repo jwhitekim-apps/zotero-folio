@@ -64,7 +64,7 @@
 <aside class="library-sidebar">
   <div class="sidebar-brand">
     <span class="sidebar-brand-mark"><Icon name="library" size={22} strokeWidth={1.65} /></span>
-    <span><strong>Folio</strong><small>Research library</small></span>
+    <span><strong>Folio</strong><small>Reading library</small></span>
   </div>
 
   <button class="sidebar-search" class:active={tab === 'search'} onclick={onSearch}>

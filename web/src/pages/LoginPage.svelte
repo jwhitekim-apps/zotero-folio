@@ -11,27 +11,27 @@
 <div class="folio-cover">
   <nav class="cover-nav">
     <a class="wordmark" href="/"><Icon name="library" size={20} /> <b>Folio</b></a>
-    <span>PERSONAL RESEARCH JOURNAL · VOL. 01</span>
+    <span>PERSONAL READING LIBRARY · VOL. 01</span>
     <a href="/guide">사용 가이드 ↗</a>
   </nav>
 
   <section class="cover-spread">
     <div class="cover-main">
       <div class="cover-copy">
-        <p class="issue">YOUR RESEARCH, YOUR WORDS</p>
-        <h1>읽은 것을 내 생각으로 남기세요.</h1>
+        <p class="issue">YOUR READING, YOUR WORDS</p>
+        <h1>읽은 것을 내 생각으로 남기세요<span class="dot">.</span></h1>
         <p class="dek">PDF 원문과 나만의 메모를 한 흐름으로 잇는 개인 서재.</p>
       </div>
 
       <figure class="research-figure">
-        <img src="/images/login-research-journal.png" alt="사용 흔적이 남은 연구 노트와 논문" />
+        <img src="/images/login-research-journal.png" alt="읽던 문서와 메모를 남긴 노트" />
         <figcaption><span>FIG. 01</span> Close reading leaves a trace.</figcaption>
       </figure>
     </div>
 
     <div class="entry">
-      <div class="entry-heading"><span>BEGIN HERE</span><h2>내 Zotero에서<br />계속 읽기</h2></div>
-      <p>Zotero 계정을 연결하면 저장된 논문과 컬렉션을 그대로 불러옵니다.</p>
+      <div class="entry-heading"><span>BEGIN HERE</span><h2>내 Zotero에서<br />계속 읽기<span class="dot">.</span></h2></div>
+      <p>Zotero 계정을 연결하면 저장된 문서와 컬렉션을 그대로 불러옵니다.</p>
       {#if error}
         <div class="entry-status error" role="alert"><Icon name="alert" size={17} /><span><b>서버에 연결하지 못했어요</b>{error}</span></div>
         <button class="entry-button" onclick={onRetry}><Icon name="refresh" size={17} /> 다시 확인</button>
@@ -53,7 +53,7 @@
   /* 콘텐츠 폭은 1560px에서 멈추고 남는 폭은 양쪽 여백으로 돌린다(울트라와이드 대응).
      높이는 고정하지 않고 내용만큼 늘어나게 해서, 짧은 뷰포트에서 겹침이 생기지 않게 한다. */
   .folio-cover{display:grid;width:100%;min-height:100dvh;padding:0 max(clamp(1.25rem,4vw,4.5rem),calc((100% - 1560px) / 2));background:var(--surface);color:var(--text);grid-template-rows:auto minmax(0,1fr) auto}
-  .cover-nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;min-height:76px;border-bottom:1px solid var(--border-strong);font-size:.68rem;letter-spacing:.1em}.cover-nav a{color:var(--text);text-decoration:none}.cover-nav>a:last-child{justify-self:end}.cover-nav>span{color:var(--text-muted)}
+  .dot{color:var(--accent)}.cover-nav{display:grid;border-top:3px solid var(--text);grid-template-columns:1fr auto 1fr;align-items:center;min-height:76px;border-bottom:1px solid var(--border-strong);font-size:.68rem;letter-spacing:.1em}.cover-nav a{color:var(--text);text-decoration:none}.cover-nav>a:last-child{justify-self:end}.cover-nav>span{color:var(--text-muted)}
   .wordmark{display:flex;align-items:center;gap:.55rem;font-family:var(--font-serif);font-size:1.1rem;letter-spacing:0}
   .cover-spread{display:grid;min-height:0;grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr);gap:clamp(2.5rem,5vw,5.5rem);align-items:stretch;padding:clamp(1.5rem,4vh,3.5rem) 0}
   .cover-main{display:grid;min-height:0;min-width:0;grid-template-rows:auto minmax(0,1fr);gap:clamp(1.5rem,3vh,2.5rem)}

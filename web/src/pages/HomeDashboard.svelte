@@ -74,7 +74,7 @@
     </div>
   </div>
   <div class="hero-book-stack" aria-hidden="true">
-    <span class="hero-book book-one"><i>FOLIO</i><b>Research<br />Archive</b></span>
+    <span class="hero-book book-one"><i>FOLIO</i><b>Reading<br />Archive</b></span>
     <span class="hero-book book-two"><i>NOTES</i><b>Ideas &amp;<br />Fragments</b></span>
     <span class="hero-book book-three"><i>PAPERS</i><b>Selected<br />Readings</b></span>
   </div>

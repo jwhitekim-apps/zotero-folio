@@ -3564,3 +3564,125 @@ main:not(.reading-mode):not(.login-mode):not(.guide-mode) > *,
 @media (max-width: 680px) {
   .hero-masthead > :nth-child(2) { display: none; }
 }
+
+/* 라이브러리·컬렉션도 홈과 같은 잡지형으로: 굵은 윗줄, 제목 끝 강조색 마침표, 목록은 상자 대신
+   번호(01, 02…)와 가는 줄로 나누는 목차 형태(근거: Consistent Editorial Page Style). */
+.page-header,
+.collection-detail-hero {
+  padding-top: 1.1rem;
+  border-top: 3px solid var(--text);
+}
+.page-header h1::after,
+.collection-detail-hero h1::after {
+  color: var(--accent);
+  content: '.';
+}
+.paper-list:not(.cover-grid) {
+  gap: 0;
+  border-top: 1px solid var(--border-strong);
+  counter-reset: folio-item;
+}
+.paper-list:not(.cover-grid) > * { counter-increment: folio-item; }
+.paper-list:not(.cover-grid) .paper-card {
+  padding: 1rem 0.4rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.paper-list:not(.cover-grid) .paper-card:hover {
+  border-color: var(--border);
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
+  box-shadow: none;
+  transform: none;
+}
+.paper-list:not(.cover-grid) .paper-card:hover .title { color: var(--accent); }
+.paper-list:not(.cover-grid) .paper-file { display: none; }
+.paper-list:not(.cover-grid) .paper-card-open::before {
+  flex: 0 0 2.8rem;
+  align-self: flex-start;
+  padding-top: 0.1rem;
+  color: var(--text-muted);
+  content: counter(folio-item, decimal-leading-zero);
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+.paper-list:not(.cover-grid) .title { transition: color 160ms ease; }
+.collection-card {
+  border-width: 0 0 1px;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.collection-card:hover { background: color-mix(in srgb, var(--accent) 4%, transparent); box-shadow: none; transform: none; }
+@media (max-width: 680px) {
+  .paper-list:not(.cover-grid) .paper-card-open::before { flex-basis: 2rem; font-size: 0.85rem; }
+}
+
+/* 남은 화면에 잡지형 규칙 적용(docs/design.md "화면 디자인 언어" — 홈 통계·섹션, 검색, 안내 카드). */
+/* 홈 통계: 상자 3개 → 위아래 줄 사이에 세로줄로 나눈 숫자 3칸 */
+.home-stats {
+  gap: 0;
+  border-block: 1px solid var(--border-strong);
+}
+.stat-card {
+  padding: 1.1rem 1.4rem;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.stat-card:first-child { border-left: 0; padding-left: 0.4rem; }
+.stat-card::after { display: none; }
+.stat-card strong { font-family: var(--font-serif); font-weight: 500; font-size: clamp(1.9rem, 3vw, 2.6rem); }
+/* 홈 섹션 제목: 위에 가는 줄 */
+.home-section-heading,
+.collection-preview-heading {
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-strong);
+}
+.section-heading h2::after { color: var(--accent); content: '.'; }
+/* 홈 컬렉션 카드: 번호 목록형 */
+.home-collection-grid { gap: 0; border-top: 1px solid var(--border-strong); }
+.home-collection-card {
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.home-collection-card:hover { background: color-mix(in srgb, var(--accent) 4%, transparent); box-shadow: none; transform: none; }
+.home-collection-card .collection-index { font-family: var(--font-serif); font-size: 0.95rem; }
+/* 검색: 머리 규칙 동일, 검색칸은 아래 굵은 줄 하나 */
+.search-page-header { padding-top: 1.1rem; border-top: 3px solid var(--text); }
+.search-page-header h1::after { color: var(--accent); content: '.'; }
+.search-panel { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.search-field-large {
+  border: 0;
+  border-bottom: 2px solid var(--text);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.search-field-large:focus-within { border-bottom-color: var(--accent); box-shadow: none; }
+.search-orbit { border: 0; }
+.search-orbit::before, .search-orbit::after { display: none; }
+/* 안내 카드(빈 목록·오류·비로그인): 점선 상자 → 위아래 가는 줄 */
+.state-card {
+  border: 0;
+  border-block: 1px solid var(--border-strong);
+  border-radius: 0;
+  background: transparent;
+}
+.state-icon { border-radius: 0; background: transparent; transform: none; }
+.search-panel .search-field-large { border: 0; border-bottom: 2px solid var(--text); border-radius: 0; background: transparent; box-shadow: none; }
+.search-panel .search-field-large:focus-within { border-bottom-color: var(--accent); box-shadow: none; }
+/* 검색칸은 아래 줄 색으로 포커스를 보여 주므로 입력창 자체의 포커스 테두리는 끈다. */
+.search-field-large .search-input:focus,
+.search-field-large .search-input:focus-visible { outline: none; box-shadow: none; }
+.search-orbit > span { border-radius: 0; background: transparent; box-shadow: none; transform: none; }
+/* 통계 줄 바로 아래 섹션은 통계의 아랫줄을 같이 쓰므로 윗줄을 겹쳐 그리지 않는다. */
+.home-stats + .home-section-heading { border-top: 0; }
