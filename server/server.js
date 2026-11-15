@@ -685,6 +685,9 @@ app.use('/api', async (req, res, next) => {
 
 app.get('/api/auth/status', (req, res) => {
   const user = currentUser();
+  // 기억하기 기능이 생기기 전에 로그인한 세션은 쿠키가 없어서 로그아웃하면 Zotero 인증으로 가 버린다.
+  // 로그인 상태를 확인할 때 쿠키가 없거나 다른 유저 것이면 여기서 발급해 둔다.
+  if (user && readRememberedUserId(req) !== String(user.id)) setRememberCookie(req, res, user.id);
   res.json({ connected: !!user, username: user?.zoteroUsername || null });
 });
 
