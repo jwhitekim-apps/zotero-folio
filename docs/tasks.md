@@ -1,8 +1,8 @@
 # Tasks
 
-capability별 구현 체크리스트. 세션 단위 작업 기록(무엇을 언제 왜
-고쳤는지)은 [TODO.md](../TODO.md)에 남는다 — 이 문서는
-그 결과가 "4개 capability를 빠짐없이 구현했는가"를 한눈에 보는 용도.
+capability별 구현 체크리스트이자 유일한 할 일 목록. 새 작업은
+근거 Requirement(`docs/specs/<capability>/spec.md`)와 함께 여기에 추가한다.
+수정 이력은 커밋 기록에 남긴다.
 
 ## papers — 논문 목록/제목 검색
 
@@ -15,7 +15,7 @@ capability별 구현 체크리스트. 세션 단위 작업 기록(무엇을 언�
 
 - [x] 논문별 메모(child note) 읽고 쓰기, 태그 식별(`zotero-insight:memo`)
 - [x] 독립 메모(standalone note) 읽고 쓰기, 태그 식별(`zotero-insight:standalone-memo`)
-- [x] 마크다운 편집, 자동저장(레이스 컨디션 수정 완료 — TODO.md 참고)
+- [x] 마크다운 편집, 자동저장(레이스 컨디션 수정 완료)
 - [x] 저장 시 기존 note 존재 여부 확인 후 PATCH/POST 분기(중복 생성 방지)
 
 ## collections — 컬렉션 기준 탐색
@@ -36,3 +36,10 @@ capability별 구현 체크리스트. 세션 단위 작업 기록(무엇을 언�
 - [x] PDF/HTML 원문 뷰어(확대/축소, 터치 제스처)
 - [x] 필기 도구 구현 후 UI 숨김 처리(GoodNotes 대체 결정)
 - [ ] 의미 기반 검색 — 보류(`contract.md`)
+
+## entry — 로그인 화면과 홈
+
+- [ ] Zotero 로그인을 Folio 도메인 안에서 처리하는 방법 검토 — 지금은 Zotero 페이지로 이동. 팝업 방식 등 가능 여부부터 조사 (근거: Login Without Leaving Folio Domain)
+- [ ] 로그인 화면 문구 "논문 원문과 나만의 노트를 한 흐름으로 연결하는 개인 연구 공간." 수정 — 연구보다 PDF 문서 중심으로 (근거: Document-Centered Copy)
+- [ ] 홈 안내 문구 "읽어야 할 자료와 기록한 생각이 한곳에 머무는 조용한 연구 공간입니다." 에서 '연구' 표현 수정 (근거: Document-Centered Copy)
+- [ ] 홈 인사 "OOO님의 서재"에서 아이디 글씨 강조 줄이기 (근거: Understated Home Greeting)
