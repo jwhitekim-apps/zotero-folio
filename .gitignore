@@ -8,3 +8,5 @@ data/
 .claude/settings.json.bak-*
 .claude/todo-guard.json
 .claude/.docker-up.stamp
+.claude/.browser-verified.stamp
+.claude/.browser-verify.tries
