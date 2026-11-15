@@ -3498,3 +3498,30 @@ a.hero-secondary { text-decoration: none; }
   .library-hero:hover .hero-book { translate: none; }
   .hero-actions button:hover, .hero-actions a:hover { transform: none; }
 }
+
+/* 등장 순서 효과: 홈·라이브러리·컬렉션·검색 화면을 열면 위에서부터 차례로 살짝 떠오른다.
+   화면 블록과 카드 목록 모두 앞쪽 8개까지만 간격을 두고, 그 뒤는 같이 나타나 긴 목록도 기다리지 않게 한다. */
+@keyframes folio-rise {
+  from { opacity: 0; translate: 0 10px; }
+  to { opacity: 1; translate: 0 0; }
+}
+main:not(.reading-mode):not(.login-mode):not(.guide-mode) > *,
+.home-stats > *,
+.book-shelf > *,
+.home-collection-grid > *,
+.paper-list > * {
+  animation: folio-rise 420ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--rise-i) * 55ms);
+}
+/* 순번 변수는 부모에게서 물려받지 않게 기본값(7)을 먼저 깔아 둔다. */
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > * { --rise-i: 7; }
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > :nth-child(1) { --rise-i: 0; }
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > :nth-child(2) { --rise-i: 1; }
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > :nth-child(3) { --rise-i: 2; }
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > :nth-child(4) { --rise-i: 3; }
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > :nth-child(5) { --rise-i: 4; }
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > :nth-child(6) { --rise-i: 5; }
+:is(main, .home-stats, .book-shelf, .home-collection-grid, .paper-list) > :nth-child(7) { --rise-i: 6; }
+@media (prefers-reduced-motion: reduce) {
+  main > *, .home-stats > *, .book-shelf > *, .home-collection-grid > *, .paper-list > * { animation: none; }
+}
