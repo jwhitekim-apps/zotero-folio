@@ -7,3 +7,4 @@ data/
 .claude/todo-guard/
 .claude/settings.json.bak-*
 .claude/todo-guard.json
+.claude/.docker-up.stamp
