@@ -54,6 +54,15 @@ export async function findUserById(userId) {
   return row ? toUser(row) : null;
 }
 
+// 로컬 검증용 관리자 로그인(/dev/login)에서만 쓴다. 이미 OAuth로 로그인한 적 있는 유저를 이름으로 찾는다.
+export async function findUserByZoteroUsername(username) {
+  const row = unwrap(
+    await supabase.from(USERS).select().eq('zotero_username', username).limit(1).maybeSingle(),
+    'users 이름 조회'
+  );
+  return row ? toUser(row) : null;
+}
+
 function toUser(row) {
   return {
     id: row.id,

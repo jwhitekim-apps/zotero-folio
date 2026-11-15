@@ -34,6 +34,7 @@ import {
   listPapersByCollection,
   upsertUserByZoteroId,
   findUserById,
+  findUserByZoteroUsername,
 } from './db.js';
 import { runWithUser, currentUser } from './context.js';
 import { SupabaseSessionStore } from './sessionStore.js';
@@ -529,6 +530,32 @@ app.get('/oauth/login', async (req, res) => {
   } catch (err) {
     console.error('[oauth] request token 실패:', err.message);
     res.status(500).send('Zotero 로그인 시작 실패: ' + err.message);
+  }
+});
+
+// 로컬 검증용 관리자 로그인. 이 폴더가 실제 서비스(folio.2joon.com)도 띄우므로 세 겹으로 막는다:
+// (1) .env에 DEV_LOGIN_TOKEN·DEV_LOGIN_USERNAME이 있을 때만 켜지고, (2) nginx를 거친 요청(X-Real-IP 있음)이나
+// localhost가 아닌 Host는 거부하고, (3) 토큰이 정확히 맞아야 한다. Zotero 키는 그 유저가 OAuth로 저장한 것을 그대로 쓴다.
+app.get('/dev/login', async (req, res) => {
+  const expected = process.env.DEV_LOGIN_TOKEN || '';
+  const username = process.env.DEV_LOGIN_USERNAME || '';
+  const host = String(req.headers.host || '');
+  const direct = !req.headers['x-real-ip'] && !req.headers['x-forwarded-for'] && /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
+  const given = Buffer.from(String(req.query.token || ''));
+  const want = Buffer.from(expected);
+  const tokenOk = expected.length >= 32 && given.length === want.length && crypto.timingSafeEqual(given, want);
+  if (!username || !direct || !tokenOk) return res.status(404).send('Not found');
+  try {
+    const user = await findUserByZoteroUsername(username);
+    if (!user) return res.status(404).send('Not found');
+    req.session.regenerate((err) => {
+      if (err) return res.status(500).send('세션 생성 실패');
+      req.session.userId = user.id;
+      req.session.save(() => res.redirect('/'));
+    });
+  } catch (err) {
+    console.error('[dev-login] 실패:', err.message);
+    res.status(500).send('로그인 실패');
   }
 });
 
