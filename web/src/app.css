@@ -3525,3 +3525,42 @@ main:not(.reading-mode):not(.login-mode):not(.guide-mode) > *,
 @media (prefers-reduced-motion: reduce) {
   main > *, .home-stats > *, .book-shelf > *, .home-collection-grid > *, .paper-list > * { animation: none; }
 }
+
+/* 홈 첫 화면: 신문·잡지 표지처럼 굵은 윗줄과 머리글(날짜·자료 수)을 두고, 둥근 카드 느낌을 걷어 낸다.
+   움직임 대신 글자 크기 대비와 선으로 Folio만의 인상을 준다(근거: Distinctive Home Hero). */
+.library-hero {
+  border: 0;
+  border-top: 3px solid var(--text);
+  border-bottom: 1px solid var(--border-strong);
+  border-radius: 0;
+  box-shadow: none;
+  padding-top: 0;
+  grid-template-rows: auto 1fr;
+}
+.library-hero::before { display: none; }
+.hero-masthead {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  grid-column: 1 / -1;
+  margin-bottom: clamp(1.5rem, 3vw, 2.4rem);
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.hero-masthead > :first-child { color: var(--text); font-family: var(--font-serif); font-size: 0.8rem; letter-spacing: 0.2em; }
+.library-hero h1 { font-size: clamp(2.6rem, 5.2vw, 4.6rem); letter-spacing: -0.06em; }
+.hero-dot { color: var(--accent); }
+.library-hero .hero-lede {
+  max-width: 30em;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--accent);
+}
+@media (max-width: 680px) {
+  .hero-masthead > :nth-child(2) { display: none; }
+}

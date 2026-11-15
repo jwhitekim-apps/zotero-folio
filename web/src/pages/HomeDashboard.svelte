@@ -11,6 +11,12 @@
   let error = $state('');
   let syncing = $state(false);
   let syncStatus = $state('');
+  // 홈 상단 신문 머리글(마스트헤드)에 넣는 오늘 날짜. 예: 2026. 11. 15. SUN
+  const todayLabel = (() => {
+    const d = new Date();
+    const day = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][d.getDay()];
+    return `${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}. ${day}`;
+  })();
 
   async function load() {
     loading = true;
@@ -50,10 +56,15 @@
 </script>
 
 <header class="library-hero">
+  <div class="hero-masthead" aria-hidden="true">
+    <span>FOLIO</span>
+    <span>{todayLabel}</span>
+    <span>{guest ? 'GUEST EDITION' : loading ? '—' : `${papers.length} ${papers.length === 1 ? 'DOCUMENT' : 'DOCUMENTS'} · ${collections.length} ${collections.length === 1 ? 'SHELF' : 'SHELVES'}`}</span>
+  </div>
   <div class="library-hero-copy">
     <p class="eyebrow">{username ? `${username} · PRIVATE LIBRARY` : 'PRIVATE LIBRARY'}</p>
-    <h1>나의 서재</h1>
-    <p>읽을 문서와 남긴 메모가 한곳에 모이는<br class="desktop-break" /> 조용한 서재입니다.</p>
+    <h1>나의 서재<span class="hero-dot">.</span></h1>
+    <p class="hero-lede">읽을 문서와 남긴 메모가 한곳에 모이는<br class="desktop-break" /> 조용한 서재입니다.</p>
     <div class="hero-actions">
       <button class="hero-primary" onclick={onOpenLibrary}><Icon name="library" size={17} /> 라이브러리 둘러보기</button>
       <button class="hero-secondary" onclick={runSync} disabled={syncing}>
