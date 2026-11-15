@@ -518,14 +518,73 @@ function popupDonePage() {
 </html>`;
 }
 
+// 로그아웃해도 30일 안에는 Zotero 인증 없이 다시 들어올 수 있게 하는 "기억하기" 쿠키.
+// 로그인할 때 발급하고 로그아웃 때는 지우지 않는다. 값은 유저 id와 만료 시각이며 SESSION_SECRET으로 서명한다.
+const REMEMBER_COOKIE = 'folio.remember';
+const REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
+function signRemember(payload) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('base64url');
+}
+function setRememberCookie(req, res, userId) {
+  const payload = `${userId}.${Date.now() + REMEMBER_MS}`;
+  res.cookie(REMEMBER_COOKIE, `${payload}.${signRemember(payload)}`, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: req.secure,
+    maxAge: REMEMBER_MS,
+  });
+}
+// 서명과 만료를 확인해 유저 id를 돌려준다. 맞지 않으면 null.
+function readRememberedUserId(req) {
+  const raw = String(req.headers.cookie || '')
+    .split(';')
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${REMEMBER_COOKIE}=`));
+  if (!raw) return null;
+  const value = decodeURIComponent(raw.slice(REMEMBER_COOKIE.length + 1));
+  const lastDot = value.lastIndexOf('.');
+  const payload = value.slice(0, lastDot);
+  const given = Buffer.from(value.slice(lastDot + 1));
+  const want = Buffer.from(signRemember(payload));
+  if (given.length !== want.length || !crypto.timingSafeEqual(given, want)) return null;
+  const expDot = payload.lastIndexOf('.');
+  const userId = payload.slice(0, expDot);
+  if (!userId || !(Number(payload.slice(expDot + 1)) > Date.now())) return null;
+  return userId;
+}
+
 app.get('/oauth/login', async (req, res) => {
+  const popup = req.query.popup === '1';
+  // 기억하기 쿠키가 유효하면 Zotero 인증을 건너뛰고 바로 세션을 만든다.
+  const rememberedId = readRememberedUserId(req);
+  if (rememberedId) {
+    try {
+      const user = await findUserById(rememberedId);
+      if (user) {
+        return req.session.regenerate((err) => {
+          if (err) return res.status(500).send('로그인 세션 생성 실패');
+          req.session.userId = user.id;
+          req.session.save(() => {
+            if (popup) {
+              res.set('Cache-Control', 'no-store');
+              return res.type('html').send(popupDonePage());
+            }
+            res.redirect('/');
+          });
+        });
+      }
+    } catch (err) {
+      // 조회에 실패하면 평소처럼 Zotero 인증으로 넘어간다.
+      console.error('[auth] 기억하기 로그인 실패:', err.message);
+    }
+  }
   try {
     const { oauthToken, oauthTokenSecret } = await getRequestToken({
       consumerKey: CONSUMER_KEY,
       consumerSecret: CONSUMER_SECRET,
       callbackUrl: `${APP_BASE_URL}/oauth/callback`,
     });
-    req.session.pendingOAuth = { token: oauthToken, secret: oauthTokenSecret, popup: req.query.popup === '1' };
+    req.session.pendingOAuth = { token: oauthToken, secret: oauthTokenSecret, popup };
     res.redirect(buildAuthorizeUrl({ oauthToken, appName: 'Folio' }));
   } catch (err) {
     console.error('[oauth] request token 실패:', err.message);
@@ -551,6 +610,7 @@ app.get('/dev/login', async (req, res) => {
     req.session.regenerate((err) => {
       if (err) return res.status(500).send('세션 생성 실패');
       req.session.userId = user.id;
+      setRememberCookie(req, res, user.id);
       req.session.save(() => res.redirect('/'));
     });
   } catch (err) {
@@ -591,6 +651,7 @@ app.get('/oauth/callback', async (req, res) => {
         return res.status(500).send('로그인 세션 생성 실패: ' + err.message);
       }
       req.session.userId = user.id;
+      setRememberCookie(req, res, user.id);
       req.session.save(() => {
         if (fromPopup) {
           res.set('Cache-Control', 'no-store');
