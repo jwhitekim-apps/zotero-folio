@@ -3469,3 +3469,6 @@ a.reader-title svg {
       transform 720ms cubic-bezier(.22, 1, .36, 1) !important;
   }
 }
+
+/* 비로그인 홈의 가이드 링크는 버튼처럼 보이도록 밑줄을 없앤다. */
+a.hero-secondary { text-decoration: none; }

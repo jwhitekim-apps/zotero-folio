@@ -44,4 +44,4 @@ capability별 구현 체크리스트이자 유일한 할 일 목록. 새 작업�
 - [x] 홈 안내 문구 "읽어야 할 자료와 기록한 생각이 한곳에 머무는 조용한 연구 공간입니다." 에서 '연구' 표현 수정 (근거: Document-Centered Copy)
 - [x] 홈 인사 "OOO님의 서재"에서 아이디 글씨 강조 줄이기 (근거: Understated Home Greeting)
 - [x] 두 번째 탭 이름 "논문" → "라이브러리" (근거: Consistent Library Naming)
-- [ ] 첫 방문 사용자가 사용 가이드를 쉽게 찾도록 진입점 배치 — 레퍼런스 조사 후 결정 (근거: Discoverable Usage Guide)
+- [x] 첫 방문 사용자가 사용 가이드를 쉽게 찾도록 진입점 배치 — 로그인 버튼 아래 안내 상자 + 비로그인 홈 버튼 (근거: Discoverable Usage Guide)

@@ -78,6 +78,7 @@
     <p>Zotero 계정으로 로그인하면 내 논문과 컬렉션, 메모가 여기에 표시됩니다.</p>
     <div class="hero-actions guest-actions">
       <button class="hero-primary" onclick={onLogin}><Icon name="library" size={17} /> Zotero로 로그인</button>
+      <a class="hero-secondary" href="/guide">사용 가이드 보기</a>
     </div>
   </div>
 {:else if loading}
