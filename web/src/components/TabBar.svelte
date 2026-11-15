@@ -7,7 +7,7 @@
 
   const tabs = [
     { id: 'home', label: '홈', icon: 'home' },
-    { id: 'papers', label: '논문', icon: 'library' },
+    { id: 'papers', label: '라이브러리', icon: 'library' },
     { id: 'collections', label: '컬렉션', icon: 'folder' },
   ];
 
