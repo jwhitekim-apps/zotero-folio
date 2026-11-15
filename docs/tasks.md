@@ -48,4 +48,5 @@ capability별 구현 체크리스트이자 유일한 할 일 목록. 새 작업�
 - [x] 로컬 검증용 관리자 로그인(`/dev/login`) — `.env` 토큰 + localhost 직접 요청만 허용 (근거: Local Verification Login)
 - [x] 버튼·카드·홈 책 표지 호버 효과 통일 (근거: Consistent Hover Feedback)
 - [x] 홈·라이브러리·컬렉션·검색 화면 등장 순서 애니메이션 (근거: Staggered Entrance Motion)
-- [ ] 홈 첫 화면 개선안 — Recent(recent.design) 등 레퍼런스를 참고해 글자 배치·대비 중심으로 (근거: Distinctive Home Hero)
+- [x] 로그아웃 후 30일 안에는 Zotero 인증 없이 재로그인(서명된 기억하기 쿠키) (근거: Remembered Login After Logout)
+- [x] 홈 첫 화면 개선 — 잡지 표지형 머리글(날짜·자료 수), 굵은 윗줄, 큰 제목 (근거: Distinctive Home Hero)

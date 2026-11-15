@@ -86,3 +86,16 @@
 - GIVEN 사용자가 로그인 후 홈에 들어왔다
 - WHEN 첫 화면을 본다
 - THEN 과한 움직임 없이도 Folio만의 시각적 특징이 드러난다
+
+### Requirement: Remembered Login After Logout
+로그인한 사용자 SHALL 로그아웃한 뒤에도 마지막 로그인으로부터 30일 안에는 Zotero 인증 화면 없이 로그인 버튼만으로 다시 들어올 수 있어야 한다.
+
+#### Scenario: 로그아웃 후 다시 로그인
+- GIVEN 사용자가 30일 안에 Zotero로 로그인한 적이 있고 방금 로그아웃했다
+- WHEN 같은 브라우저에서 로그인 버튼을 누른다
+- THEN Zotero 인증 화면 없이 바로 로그인된 홈으로 돌아온다
+
+#### Scenario: 기간이 지났거나 변조된 기억 정보
+- GIVEN 브라우저의 기억 정보가 30일이 지났거나 값이 바뀌었다
+- WHEN 로그인 버튼을 누른다
+- THEN 평소처럼 Zotero 인증 화면으로 이동한다
