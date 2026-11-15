@@ -8,10 +8,21 @@ cd "${CLAUDE_PROJECT_DIR:-$(dirname "$0")/../..}" || exit 0
 built=.claude/.docker-up.stamp
 verified=.claude/.browser-verified.stamp
 tries=.claude/.browser-verify.tries
+docs_ok=.claude/.docs-checked.stamp
 input=$(cat)
 
 hash() { { git rev-parse HEAD; git diff HEAD -- server web ':!web/dist' ':!**/node_modules'; git ls-files -o --exclude-standard -- server web | xargs -r sha1sum; } 2>/dev/null | sha1sum | cut -d' ' -f1; }
 cur=$(hash)
+
+# 0) 문서 먼저: server/·web/ 코드가 커밋 전 상태로 바뀌었는데 docs/는 그대로면 한 번 막는다.
+#    문서가 필요 없는 사소한 변경이면 Claude가 docs_ok 스탬프에 현재 해시를 적어 넘어간다.
+if [ -n "$(git status --porcelain -- server web ':!web/dist' 2>/dev/null)" ] \
+   && [ -z "$(git status --porcelain -- docs 2>/dev/null)" ] \
+   && [ "$cur" != "$(cat "$docs_ok" 2>/dev/null)" ]; then
+  reason="코드(server/·web/)는 바뀌었는데 docs/는 그대로입니다. .claude/rules/docs-first.md에 따라 Skill jw:spec-docs로 docs/specs/<capability>/spec.md 요구사항과 docs/tasks.md 항목을 먼저 정리하세요. 요구사항이 바뀌지 않는 사소한 변경이면 다음 명령으로 기록하고 이유를 사용자에게 알리세요: echo $cur > $docs_ok"
+  jq -n --arg r "$reason" '{decision:"block", reason:$r}'
+  exit 0
+fi
 
 # 1) 빌드: 마지막 빌드 이후 바뀌었을 때만
 if [ "$cur" != "$(cat "$built" 2>/dev/null)" ]; then

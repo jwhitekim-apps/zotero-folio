@@ -12,4 +12,5 @@ Zotero 라이브러리에 저장한 논문을 웹에서 읽고 메모를 남기�
 | `dev-workflow.md` | 작업 디렉터리, 빌드, 코딩 컨벤션 |
 | `docs.md` | 문서 배치 |
 | `harness.md` | 기능 개발 워크플로(builder → verifier) |
+| `docs-first.md` | 기능 작업 전 문서부터 정리 |
 | `commit-automation.md` | 커밋 자동화 |

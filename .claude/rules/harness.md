@@ -17,3 +17,4 @@
 | 2026-11-03 | deploy-status 껍데기 훅 삭제, `.claude/deploy-status.enabled`로 전환 | hooks, settings | my-claude-skills가 jw 플러그인으로 바뀌어 껍데기 훅이 부르던 `~/.claude/skills/deploy-status` 경로가 사라짐 |
 | 2026-11-15 | Stop 훅 `.claude/hooks/docker-up.sh` 추가 — server/·web/ 변경이 있으면 `docker compose up --build -d` | hooks, settings | 사용자 요청 — 작업 후 바로 브라우저로 직접 확인 |
 | 2026-11-15 | docker-up 훅 확장 — 빌드 후 브라우저 검증 전까지 종료를 막고(jw:agent-browser), 수정 시 재빌드·재검증, 같은 변경에 최대 3번 | hooks | 사용자 요청 — 작업 끝마다 실제 화면 검증 강제 |
+| 2026-11-15 | 문서 먼저 규칙(`rules/docs-first.md`)과 docker-up 훅의 docs 확인 단계 추가 — 코드만 바뀌고 docs/가 그대로면 종료를 막음 | rules, hooks | 사용자 요청 — 시키지 않아도 매번 문서부터 정리 |

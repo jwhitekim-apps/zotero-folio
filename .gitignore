@@ -10,3 +10,4 @@ data/
 .claude/.docker-up.stamp
 .claude/.browser-verified.stamp
 .claude/.browser-verify.tries
+.claude/.docs-checked.stamp
