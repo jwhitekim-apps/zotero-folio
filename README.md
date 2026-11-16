@@ -22,6 +22,7 @@ Folio는 Claude Code와 직접 만든 스킬 모음 [jwhitekim/my-claude-skills]
 | 구현과 검증 분리 | 구현 에이전트 [folio-builder](.claude/agents/folio-builder.md)와 검증 에이전트 [folio-verifier](.claude/agents/folio-verifier.md)를 [folio-feature-team](.claude/skills/folio-feature-team/) 스킬이 조율 |
 | 실제 화면 확인 | 작업이 끝나면 [Stop 훅](.claude/hooks/docker-up.sh)이 Docker로 다시 띄우고, `jw:agent-browser`로 브라우저 검증을 마칠 때까지 종료를 막음. 로그인 후 화면은 로컬 전용 관리자 로그인(`/dev/login`, `.env` 토큰)으로 확인 |
 | 교차 검토 | `jw:codex`로 Codex에게 코드·문서 검토 요청 |
+| 코드 감사 | [jwhitekim/repo-proof](https://github.com/jwhitekim/repo-proof)로 보안·동작 문제를 점검하고 지적 번호(RP-…)로 추적해 수정. 예: 컬렉션 전환 경쟁 조건(RP-WEB-002), 내부망 주소 차단(RP-NODE-002) |
 | 커밋과 배포 | `jw:commit-and-push`로 커밋, `jw:deploy-status`로 GitHub Actions 배포 결과 확인 |
 
 하네스 구성과 변경 이력은 [.claude/rules/harness.md](.claude/rules/harness.md)에 있습니다.
